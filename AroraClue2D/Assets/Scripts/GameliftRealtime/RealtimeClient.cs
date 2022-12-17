@@ -104,21 +104,21 @@ public class RealTimeClient
 
                 break;
 
-            case GameManager.DRAW_CARD_ACK_OP:
-                // A player has drawn a card.  To be received as an acknowledgement that a card was played,
-                // regardless of who played it, and update the UI accordingly.
-                Debug.Log("Player draw card ack...");
+            //case GameManager.DRAW_CARD_ACK_OP:
+            //    // A player has drawn a card.  To be received as an acknowledgement that a card was played,
+            //    // regardless of who played it, and update the UI accordingly.
+            //    Debug.Log("Player draw card ack...");
 
-                string data = BytesToString(e.Data);
-                // Debug.Log(data);
+            //    string data = BytesToString(e.Data);
+            //    // Debug.Log(data);
 
-                CardPlayed cardPlayedMessage = JsonConvert.DeserializeObject<CardPlayed>(data);
-                // Debug.Log(cardPlayedMessage.playedBy);
-                // Debug.Log(cardPlayedMessage.card);
+            //    CardPlayed cardPlayedMessage = JsonConvert.DeserializeObject<CardPlayed>(data);
+            //    // Debug.Log(cardPlayedMessage.playedBy);
+            //    // Debug.Log(cardPlayedMessage.card);
 
-                OnCardPlayed(cardPlayedMessage);
+            //    OnCardPlayed(cardPlayedMessage);
 
-                break;
+            //    break;
 
             case GameManager.GAMEOVER_OP:
                 // gives us the match results
@@ -143,13 +143,13 @@ public class RealTimeClient
     {
         Debug.Log("OnCardPlayed");
 
-        CardPlayedEventArgs cardPlayedEventArgs = new CardPlayedEventArgs(cardPlayed);
+        //CardPlayedEventArgs cardPlayedEventArgs = new CardPlayedEventArgs(cardPlayed);
 
-        EventHandler<CardPlayedEventArgs> handler = CardPlayedEventHandler;
-        if (handler != null)
-        {
-            handler(this, cardPlayedEventArgs);
-        }
+        //EventHandler<CardPlayedEventArgs> handler = CardPlayedEventHandler;
+        //if (handler != null)
+        //{
+        //    handler(this, cardPlayedEventArgs);
+        //}
     }
 
     protected virtual void OnRemotePlayerIdReceived(StartMatch startMatch)

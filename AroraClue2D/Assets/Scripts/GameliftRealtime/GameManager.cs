@@ -12,7 +12,7 @@ using Unity.VisualScripting;
 
 public class GameManager : MonoBehaviour
 {
-    private static PrivateConsts privateConsts;
+    public static PrivateConsts privateConsts;
 
 
     string GameSessionPlacementEndpoint = privateConsts.GameSessionPlacementEndpoint;
@@ -22,12 +22,13 @@ public class GameManager : MonoBehaviour
     private RealTimeClient _realTimeClient;
     private APIManager _apiManager;
 
-    private Button _findMatchButton;
-    private Button _playCardButton;
-    private Button _quitButton;
+    //private Button _findMatchButton;
+    //private Button _playCardButton;
+    //private Button _quitButton;
 
     private MatchResults _matchResults = new MatchResults();
     private MatchStats _matchStats = new MatchStats();
+
     private string _playerId;
     private string _remotePlayerId = "";
     private bool _processCardPlay = false;
@@ -39,25 +40,27 @@ public class GameManager : MonoBehaviour
     private const string REQUEST_FIND_MATCH_OP = "1";
 
     // these are in order from left-to-right on screen, first 2 are for local player, second 2 for remote player
-    private List<Vector3> cardLocationsInUI = new List<Vector3>() { new Vector3(314, 340, 0), new Vector3(710.8f, 340, 0), new Vector3(1217.5f, 331.3f, 0), new Vector3(1618.1f, 345.9f, 0) };
-    private List<TMPro.TextMeshProUGUI> cardUIObjects = new List<TMPro.TextMeshProUGUI>();
-    private List<CardPlayed> cardsPlayed = new List<CardPlayed>();
 
-    public GameObject CardPrefab;
+    //private List<Vector3> cardLocationsInUI = new List<Vector3>() { new Vector3(314, 340, 0), new Vector3(710.8f, 340, 0), new Vector3(1217.5f, 331.3f, 0), new Vector3(1618.1f, 345.9f, 0) };
+    //private List<TMPro.TextMeshProUGUI> cardUIObjects = new List<TMPro.TextMeshProUGUI>();
+    //private List<CardPlayed> cardsPlayed = new List<CardPlayed>();
 
-    public TMPro.TextMeshProUGUI localClientPlayerName;
-    public TMPro.TextMeshProUGUI Player1Result;
+    //public GameObject CardPrefab;
 
-    public TMPro.TextMeshProUGUI remoteClientPlayerName;
-    public TMPro.TextMeshProUGUI Player2Result;
+    //public TMPro.TextMeshProUGUI localClientPlayerName;
+    //public TMPro.TextMeshProUGUI Player1Result;
+
+    //public TMPro.TextMeshProUGUI remoteClientPlayerName;
+    //public TMPro.TextMeshProUGUI Player2Result;
 
     // GameLift server opcodes 
     // An opcode defined by client and your server script that represents a custom message type
     public const int OP_CODE_PLAYER_ACCEPTED = 113;
     public const int GAME_START_OP = 201;
     public const int GAMEOVER_OP = 209;
-    public const int PLAY_CARD_OP = 300;
-    public const int DRAW_CARD_ACK_OP = 301;
+
+    //public const int PLAY_CARD_OP = 300;
+    //public const int DRAW_CARD_ACK_OP = 301;
 
     public async void OnFindMatchPressed()
     {
@@ -68,12 +71,16 @@ public class GameManager : MonoBehaviour
         string jsonPostData = JsonUtility.ToJson(matchMessage);
         // Debug.Log(jsonPostData);
 
-        localClientPlayerName.text = _playerId;
+        //localClientPlayerName.text = _playerId;
+        Debug.Log("local client player name" + _playerId);
+        
 
         string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
+        Debug.Log("response: " + response);
+
         GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
 
-        // Debug.Log(gameSessionPlacementInfo);
+        Debug.Log(gameSessionPlacementInfo);
 
         if (gameSessionPlacementInfo != null)
         {
@@ -107,7 +114,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        _findMatchButton.gameObject.SetActive(false); // remove from UI
+        //_findMatchButton.gameObject.SetActive(false); // remove from UI
     }
 
     private async Task<bool> SubscribeToFulfillmentNotifications(string placementId)
@@ -195,20 +202,20 @@ public class GameManager : MonoBehaviour
         if (_findingMatch)
         {
             _findingMatch = false;
-            _findMatchButton.enabled = false;
-            _findMatchButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Searching...";
+            //_findMatchButton.enabled = false;
+            //_findMatchButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Searching...";
         }
 
         if (_realTimeClient != null && _realTimeClient.GameStarted)
         {
-            _playCardButton.gameObject.SetActive(true);
+            //_playCardButton.gameObject.SetActive(true);
             _realTimeClient.GameStarted = false;
         }
 
         if (_updateRemotePlayerId)
         {
             _updateRemotePlayerId = false;
-            remoteClientPlayerName.text = _remotePlayerId;
+            //remoteClientPlayerName.text = _remotePlayerId;
         }
 
         // Card plays - there's a better way to do this...
@@ -229,16 +236,16 @@ public class GameManager : MonoBehaviour
 
     private void ProcessCardPlay()
     {
-        for (int cardIndex = 0; cardIndex < _matchStats.localPlayerCardsPlayed.Count; cardIndex++)
-        {
-            cardUIObjects[cardIndex].text = _matchStats.localPlayerCardsPlayed[cardIndex];
-        }
+        //for (int cardIndex = 0; cardIndex < _matchStats.localPlayerCardsPlayed.Count; cardIndex++)
+        //{
+        //    cardUIObjects[cardIndex].text = _matchStats.localPlayerCardsPlayed[cardIndex];
+        //}
 
-        for (int cardIndex = 0; cardIndex < _matchStats.remotePlayerCardsPlayed.Count; cardIndex++)
-        {
-            // Added + 2 because cardUIObjects holds all UI cards, first 2 are local, last 2 are remote 
-            cardUIObjects[cardIndex + 2].text = _matchStats.remotePlayerCardsPlayed[cardIndex];
-        }
+        //for (int cardIndex = 0; cardIndex < _matchStats.remotePlayerCardsPlayed.Count; cardIndex++)
+        //{
+        //    // Added + 2 because cardUIObjects holds all UI cards, first 2 are local, last 2 are remote 
+        //    cardUIObjects[cardIndex + 2].text = _matchStats.remotePlayerCardsPlayed[cardIndex];
+        //}
     }
 
     private void DisplayMatchResults()
@@ -270,31 +277,32 @@ public class GameManager : MonoBehaviour
             remotePlayerResults += _matchResults.playerOneScore;
         }
 
-        Player1Result.text = localPlayerResults;
-        Player2Result.text = remotePlayerResults;
+        //Player1Result.text = localPlayerResults;
+        //Player2Result.text = remotePlayerResults;
+        Debug.Log("player1result: " + localPlayerResults + ". player2result: " + remotePlayerResults);
     }
 
     private void BuildCardsIntoUI()
     {
-        // build cards into UI from prefab
-        GameObject canvas = GameObject.Find("PlayPanel");
-        foreach (Vector3 cardLocation in cardLocationsInUI)
-        {
-            GameObject card = Instantiate(CardPrefab, cardLocation, Quaternion.identity, canvas.transform);
-            cardUIObjects.Add(card.GetComponentInChildren<TMPro.TextMeshProUGUI>());
-        }
+        //// build cards into UI from prefab
+        //GameObject canvas = GameObject.Find("PlayPanel");
+        //foreach (Vector3 cardLocation in cardLocationsInUI)
+        //{
+        //    GameObject card = Instantiate(CardPrefab, cardLocation, Quaternion.identity, canvas.transform);
+        //    cardUIObjects.Add(card.GetComponentInChildren<TMPro.TextMeshProUGUI>());
+        //}
 
-        CardPrefab.gameObject.SetActive(false); // turn off source prefab 
+        //CardPrefab.gameObject.SetActive(false); // turn off source prefab 
     }
 
     public void OnPlayCardPressed()
     {
-        Debug.Log("Play card pressed");
+        //Debug.Log("Play card pressed");
 
-        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+        //RealtimePayload realtimePayload = new RealtimePayload(_playerId);
 
-        // Use the Realtime client's SendMessage function to pass data to the server
-        _realTimeClient.SendMessage(PLAY_CARD_OP, realtimePayload);
+        //// Use the Realtime client's SendMessage function to pass data to the server
+        //_realTimeClient.SendMessage(PLAY_CARD_OP, realtimePayload);
     }
 
     void Start()
@@ -303,19 +311,23 @@ public class GameManager : MonoBehaviour
         _apiManager = FindObjectOfType<APIManager>();
         _sqsMessageProcessing = FindObjectOfType<SQSMessageProcessing>();
 
-        _findMatchButton = GameObject.Find("FindMatch").GetComponent<Button>();
-        _findMatchButton.onClick.AddListener(OnFindMatchPressed);
+        
 
-        _playCardButton = GameObject.Find("PlayCard").GetComponent<Button>();
-        _playCardButton.onClick.AddListener(OnPlayCardPressed);
-        _playCardButton.gameObject.SetActive(false);
+        //_findMatchButton = GameObject.Find("FindMatch").GetComponent<Button>();
+        //_findMatchButton.onClick.AddListener(OnFindMatchPressed);
 
-        _quitButton = GameObject.Find("Quit").GetComponent<Button>();
-        _quitButton.onClick.AddListener(OnQuitPressed);
+        //_playCardButton = GameObject.Find("PlayCard").GetComponent<Button>();
+        //_playCardButton.onClick.AddListener(OnPlayCardPressed);
+        //_playCardButton.gameObject.SetActive(false);
+
+        //_quitButton = GameObject.Find("Quit").GetComponent<Button>();
+        //_quitButton.onClick.AddListener(OnQuitPressed);
 
         _playerId = System.Guid.NewGuid().ToString();
 
         BuildCardsIntoUI();
+
+        OnFindMatchPressed();
     }
 
     public static int GetAvailableUdpPort()

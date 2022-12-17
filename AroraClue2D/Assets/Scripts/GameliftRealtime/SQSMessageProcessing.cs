@@ -12,11 +12,11 @@ using Newtonsoft.Json;
 public class SQSMessageProcessing : MonoBehaviour
 {
 
-    private static PrivateConsts privateConsts;
-
+    public static PrivateConsts privateConsts;
 
     private string IdentityPool = privateConsts.IdentityPool;
     private string SQSURL = privateConsts.SQSURL;
+
 
     private const int MaxMessages = 1;
     private const int WaitTime = 20;

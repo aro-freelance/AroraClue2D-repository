@@ -10,7 +10,10 @@ public class APIManager : MonoBehaviour
 
         var formData = System.Text.Encoding.UTF8.GetBytes(postData);
 
+        Debug.Log("api: " + api);
+
         UnityWebRequest webRequest = UnityWebRequest.Post(api, "");
+
 
         // add body
         webRequest.uploadHandler = new UploadHandlerRaw(formData);
@@ -25,6 +28,7 @@ public class APIManager : MonoBehaviour
 
         if (webRequest.result == UnityWebRequest.Result.Success)
         {
+            //GOT TO HERE... so the server is now set up correctly.  IF THERE ARE ISSUES, HARD CODE SECRET VALUES FOR TESTING
             Debug.Log("Success, API call complete!");
             // Debug.Log(webRequest.downloadHandler.text);
             
@@ -32,7 +36,7 @@ public class APIManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("API call failed: " + webRequest.error + "\n" + webRequest.result + "\n" + webRequest.responseCode);
+            Debug.Log("API call failed: " + webRequest.error + ". " + webRequest.result + ". " + webRequest.responseCode);
         }
 
         webRequest.Dispose();
