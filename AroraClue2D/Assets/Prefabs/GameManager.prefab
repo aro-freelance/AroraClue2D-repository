@@ -1,0 +1,631 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1817808426811313669
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 534228940325431264}
+  - component: {fileID: 4656602095645409311}
+  m_Layer: 0
+  m_Name: Player2Stats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &534228940325431264
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817808426811313669}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8706413012646779032}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4656602095645409311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817808426811313669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0fb844c77407574f9e49a20fe50885f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  charName: 
+  charLevel: 1
+  currentEXP: 0
+  expToNextLevel: 
+  maxLevel: 100
+  baseExp: 1000
+  characterJob: 
+  currentHP: 0
+  maxHP: 0
+  currentMP: 0
+  maxMP: 0
+  charStr: 0
+  charDex: 0
+  charVit: 0
+  charAgi: 0
+  charInt: 0
+  charMnd: 0
+  charChr: 0
+  attack: 0
+  defense: 0
+  mattack: 0
+  mdefense: 0
+  evasion: 0
+  accuracy: 0
+  mevasion: 0
+  maccuracy: 0
+  speed: 0
+  luck: 0
+  element: 0
+  equippedWeapon: 
+  equippedOffhand: 
+  equippedHead: 
+  equippedBody: 
+  equippedHands: 
+  equippedLegs: 
+  equippedFeet: 
+  equippedAccessory: 
+  weaponPower: 1
+  offhandPower: 1
+  headArmorPower: 1
+  bodyArmorPower: 1
+  handsArmorPower: 1
+  legsArmorPower: 1
+  feetArmorPower: 1
+  accessoryArmorPower: 1
+  weaponMPower: 1
+  weaponAccuracy: 1
+  weaponMAccuracy: 1
+  weaponSpeed: 1
+  equippedArmor: 
+  armorDefense: 1
+  armorMDefense: 1
+  armorEvasion: 1
+  armorMEvasion: 1
+  luckFactor: 0
+  charImage: {fileID: 0}
+  jobMeldString: []
+--- !u!1 &3557094125486818121
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1095660533004497852}
+  - component: {fileID: 8904002102370633100}
+  m_Layer: 0
+  m_Name: Player4Stats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1095660533004497852
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3557094125486818121}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8706413012646779032}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8904002102370633100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3557094125486818121}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0fb844c77407574f9e49a20fe50885f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  charName: 
+  charLevel: 1
+  currentEXP: 0
+  expToNextLevel: 
+  maxLevel: 100
+  baseExp: 1000
+  characterJob: 
+  currentHP: 0
+  maxHP: 0
+  currentMP: 0
+  maxMP: 0
+  charStr: 0
+  charDex: 0
+  charVit: 0
+  charAgi: 0
+  charInt: 0
+  charMnd: 0
+  charChr: 0
+  attack: 0
+  defense: 0
+  mattack: 0
+  mdefense: 0
+  evasion: 0
+  accuracy: 0
+  mevasion: 0
+  maccuracy: 0
+  speed: 0
+  luck: 0
+  element: 0
+  equippedWeapon: 
+  equippedOffhand: 
+  equippedHead: 
+  equippedBody: 
+  equippedHands: 
+  equippedLegs: 
+  equippedFeet: 
+  equippedAccessory: 
+  weaponPower: 1
+  offhandPower: 1
+  headArmorPower: 1
+  bodyArmorPower: 1
+  handsArmorPower: 1
+  legsArmorPower: 1
+  feetArmorPower: 1
+  accessoryArmorPower: 1
+  weaponMPower: 1
+  weaponAccuracy: 1
+  weaponMAccuracy: 1
+  weaponSpeed: 1
+  equippedArmor: 
+  armorDefense: 1
+  armorMDefense: 1
+  armorEvasion: 1
+  armorMEvasion: 1
+  luckFactor: 0
+  charImage: {fileID: 0}
+  jobMeldString: []
+--- !u!1 &3597904208718001426
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8706413012646779032}
+  - component: {fileID: 7322261793906013066}
+  - component: {fileID: 1132469231}
+  - component: {fileID: 2117968952}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8706413012646779032
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3597904208718001426}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8.87216, y: 2.1303265, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8031117411707999562}
+  - {fileID: 534228940325431264}
+  - {fileID: 8225950261807221836}
+  - {fileID: 1095660533004497852}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7322261793906013066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3597904208718001426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 453bec9e5da616c47a06d2a6bce9c288, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerStats:
+  - {fileID: 8031117411707999563}
+  - {fileID: 4656602095645409311}
+  - {fileID: 3038929744811130228}
+  - {fileID: 8904002102370633100}
+  gameMenuOpen: 0
+  dialogueActive: 0
+  fadingBetweenAreas: 0
+  itemsInInventory: []
+  numberOfEachItem: 
+  referenceItems: []
+  currentMoney: 0
+--- !u!114 &1132469231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3597904208718001426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3acffe0aae9e04ba13fbef42bbc4b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  questMarkerNames:
+  - 
+  - Fight the Dragon!
+  - enter cave
+  - go to the new town
+  - meld a new job
+  questMarkerComplete: 
+--- !u!114 &2117968952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3597904208718001426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8fbc7750d4b7a94195f45369b13271e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  charNumber: 1
+  numberOfCharacters: 4
+  jobStringArray: []
+  valuesForTable: []
+  fighterCount: 0
+  healerCount: 0
+  rogueCount: 0
+  mageCount: 0
+  classTier: 0
+  currentMeldFirstPart: 
+  currentMeldSecondPart: 
+  currentJobDominantEssenceRoll1: 
+  currentJobDominantEssenceRoll2: 
+  currentJobDominantEssenceRoll3: 
+  currentClassName: 
+  newClassChoiceOne: 
+  newClassChoiceTwo: 
+  newClassChoiceThree: 
+  meld1FighterButton: {fileID: 0}
+  meld1HealerButton: {fileID: 0}
+  meld1RogueButton: {fileID: 0}
+  meld1MageButton: {fileID: 0}
+  meld2FighterButton: {fileID: 0}
+  meld2HealerButton: {fileID: 0}
+  meld2RogueButton: {fileID: 0}
+  meld2MageButton: {fileID: 0}
+  choiceOneButton: {fileID: 0}
+  choiceTwoButton: {fileID: 0}
+  choiceThreeButton: {fileID: 0}
+  meldButtonPanelOne: {fileID: 0}
+  cancelButtonPanelOne: {fileID: 0}
+  meldButtonPanelTwo: {fileID: 0}
+  cancelButtonPanelTwo: {fileID: 0}
+  characterButtons: []
+  choiceOneDescription: {fileID: 0}
+  choiceTwoDescripton: {fileID: 0}
+  choiceThreeDescription: {fileID: 0}
+  choiceOneButtonText: {fileID: 0}
+  choiceTwoButtonText: {fileID: 0}
+  choiceThreeButtonText: {fileID: 0}
+  choicePanelHeader: {fileID: 0}
+  meldOneIsSelected: 0
+  meldTwoIsSelected: 0
+  classChoiceIsSelected: 0
+  isTitle: 0
+  isPrefix: 0
+  isMainJob: 0
+  isPlayerChoice: 0
+  jobPrefixOrTitleInt: 0
+  whatIsBeingUpdated: 
+  showReRollPanel: 0
+  jobA: []
+  jobB: []
+  jobC: []
+  jobD: []
+  jobAB: []
+  jobAC: []
+  jobAD: []
+  jobBC: []
+  jobBD: []
+  jobCD: []
+  jobAAB: []
+  jobAAC: []
+  jobAAD: []
+  jobBBA: []
+  jobBBC: []
+  jobBBD: []
+  jobCCA: []
+  jobCCB: []
+  jobCCD: []
+  jobDDA: []
+  jobDDB: []
+  jobDDC: []
+  jobABC: []
+  jobABD: []
+  jobACD: []
+  jobBCD: []
+  titlesA: []
+  titlesB: []
+  titlesC: []
+  titlesD: []
+  titlesAB: []
+  titlesAC: []
+  titlesAD: []
+  titlesBC: []
+  titlesBD: []
+  titlesCD: []
+  titlesAAB: []
+  titlesAAC: []
+  titlesAAD: []
+  titlesBBA: []
+  titlesBBC: []
+  titlesBBD: []
+  titlesCCA: []
+  titlesCCB: []
+  titlesCCD: []
+  titlesDDA: []
+  titlesDDB: []
+  titlesDDC: []
+  titlesABC: []
+  titlesABD: []
+  titlesACD: []
+  titlesBCD: []
+  prefixesA: []
+  prefixesB: []
+  prefixesC: []
+  prefixesD: []
+  prefixesAB: []
+  prefixesAC: []
+  prefixesAD: []
+  prefixesBC: []
+  prefixesBD: []
+  prefixesCD: []
+  prefixesAAB: []
+  prefixesAAC: []
+  prefixesAAD: []
+  prefixesBBA: []
+  prefixesBBC: []
+  prefixesBBD: []
+  prefixesCCA: []
+  prefixesCCB: []
+  prefixesCCD: []
+  prefixesDDA: []
+  prefixesDDB: []
+  prefixesDDC: []
+  prefixesABC: []
+  prefixesABD: []
+  prefixesACD: []
+  prefixesBCD: []
+  jobDescriptions: []
+  titleDescriptions: []
+  prefixDescriptions: []
+--- !u!1 &7195285201794927096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8225950261807221836}
+  - component: {fileID: 3038929744811130228}
+  m_Layer: 0
+  m_Name: Player3Stats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8225950261807221836
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7195285201794927096}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8706413012646779032}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3038929744811130228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7195285201794927096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0fb844c77407574f9e49a20fe50885f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  charName: 
+  charLevel: 1
+  currentEXP: 0
+  expToNextLevel: 
+  maxLevel: 100
+  baseExp: 1000
+  characterJob: 
+  currentHP: 0
+  maxHP: 0
+  currentMP: 0
+  maxMP: 0
+  charStr: 0
+  charDex: 0
+  charVit: 0
+  charAgi: 0
+  charInt: 0
+  charMnd: 0
+  charChr: 0
+  attack: 0
+  defense: 0
+  mattack: 0
+  mdefense: 0
+  evasion: 0
+  accuracy: 0
+  mevasion: 0
+  maccuracy: 0
+  speed: 0
+  luck: 0
+  element: 0
+  equippedWeapon: 
+  equippedOffhand: 
+  equippedHead: 
+  equippedBody: 
+  equippedHands: 
+  equippedLegs: 
+  equippedFeet: 
+  equippedAccessory: 
+  weaponPower: 1
+  offhandPower: 1
+  headArmorPower: 1
+  bodyArmorPower: 1
+  handsArmorPower: 1
+  legsArmorPower: 1
+  feetArmorPower: 1
+  accessoryArmorPower: 1
+  weaponMPower: 1
+  weaponAccuracy: 1
+  weaponMAccuracy: 1
+  weaponSpeed: 1
+  equippedArmor: 
+  armorDefense: 1
+  armorMDefense: 1
+  armorEvasion: 1
+  armorMEvasion: 1
+  luckFactor: 0
+  charImage: {fileID: 0}
+  jobMeldString: []
+--- !u!1 &8031117411707999560
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8031117411707999562}
+  - component: {fileID: 8031117411707999563}
+  m_Layer: 0
+  m_Name: Player1Stats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8031117411707999562
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8031117411707999560}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8706413012646779032}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8031117411707999563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8031117411707999560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0fb844c77407574f9e49a20fe50885f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  charName: 
+  charLevel: 1
+  currentEXP: 0
+  expToNextLevel: 
+  maxLevel: 100
+  baseExp: 1000
+  characterJob: 
+  currentHP: 0
+  maxHP: 0
+  currentMP: 0
+  maxMP: 0
+  charStr: 0
+  charDex: 0
+  charVit: 0
+  charAgi: 0
+  charInt: 0
+  charMnd: 0
+  charChr: 0
+  attack: 0
+  defense: 0
+  mattack: 0
+  mdefense: 0
+  evasion: 0
+  accuracy: 0
+  mevasion: 0
+  maccuracy: 0
+  speed: 0
+  luck: 0
+  element: 0
+  equippedWeapon: 
+  equippedOffhand: 
+  equippedHead: 
+  equippedBody: 
+  equippedHands: 
+  equippedLegs: 
+  equippedFeet: 
+  equippedAccessory: 
+  weaponPower: 1
+  offhandPower: 1
+  headArmorPower: 1
+  bodyArmorPower: 1
+  handsArmorPower: 1
+  legsArmorPower: 1
+  feetArmorPower: 1
+  accessoryArmorPower: 1
+  weaponMPower: 1
+  weaponAccuracy: 1
+  weaponMAccuracy: 1
+  weaponSpeed: 1
+  equippedArmor: 
+  armorDefense: 1
+  armorMDefense: 1
+  armorEvasion: 1
+  armorMEvasion: 1
+  luckFactor: 0
+  charImage: {fileID: 0}
+  jobMeldString: []

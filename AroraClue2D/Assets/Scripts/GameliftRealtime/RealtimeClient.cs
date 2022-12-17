@@ -77,7 +77,7 @@ public class RealTimeClient
         // handle message based on OpCode
         switch (e.OpCode)
         {
-            case GameManager.OP_CODE_PLAYER_ACCEPTED:
+            case ServerManager.OP_CODE_PLAYER_ACCEPTED:
                 // This tells our client that the player has been accepted into the Game Session as a new player session.
                 Debug.Log("Player accepted into game session!");
 
@@ -88,7 +88,7 @@ public class RealTimeClient
 
                 break;
 
-            case GameManager.GAME_START_OP:
+            case ServerManager.GAME_START_OP:
                 // The game start op tells our game clients that all players have joined and the game should start
                 Debug.Log("Start game op received...");
 
@@ -120,7 +120,7 @@ public class RealTimeClient
 
             //    break;
 
-            case GameManager.GAMEOVER_OP:
+            case ServerManager.GAMEOVER_OP:
                 // gives us the match results
                 Debug.Log("Game over op...");
                 
