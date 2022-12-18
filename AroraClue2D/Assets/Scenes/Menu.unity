@@ -912,7 +912,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7678945826207110737, guid: d6712f2ad9016d94fa3519882c9c12ca, type: 3}
       propertyPath: m_RootOrder
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 7678945826207110737, guid: d6712f2ad9016d94fa3519882c9c12ca, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1081,7 +1081,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 196531538891118355, guid: dc4afe843c7c75d4e90804eb7139f312, type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 196531538891118355, guid: dc4afe843c7c75d4e90804eb7139f312, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6695,13 +6695,121 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.size
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[0]
+      value: Room 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[1]
+      value: Room 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[2]
+      value: Room 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[3]
+      value: Room 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[4]
+      value: Room 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[5]
+      value: Room 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[6]
+      value: Room 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[7]
+      value: Room 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[8]
+      value: Room 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[9]
+      value: Room 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[10]
+      value: Room 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: places.Array.data[11]
+      value: Room 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.data[0]
+      value: Revolver
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.data[1]
+      value: Dagger
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.data[2]
+      value: Lead Pipe
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.data[3]
+      value: Rope
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.data[4]
+      value: Candlestick
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: weapons.Array.data[5]
+      value: Wrench
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.data[0]
+      value: Mrs. Peacock
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.data[1]
+      value: Colonel Mustard
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.data[2]
+      value: Mr. Green
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.data[3]
+      value: Professor Plum
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.data[4]
+      value: Miss Scarlet
+      objectReference: {fileID: 0}
+    - target: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: suspects.Array.data[5]
+      value: Mrs. White
+      objectReference: {fileID: 0}
     - target: {fileID: 3597904208718001426, guid: 14959bac892f0c649b86c543917bd662, type: 3}
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
     - target: {fileID: 8706413012646779032, guid: 14959bac892f0c649b86c543917bd662, type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 8706413012646779032, guid: 14959bac892f0c649b86c543917bd662, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6754,7 +6862,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6732661876288537152, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
       propertyPath: m_RootOrder
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6732661876288537152, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6810,6 +6918,63 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
+--- !u!1001 &1599436464
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 996235369697107737, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_Name
+      value: InteractPoint
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_RootOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.638
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.249
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6220319168351281802, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0a9962c0b56968c44b5e2b1fcfbb4d9f, type: 3}
 --- !u!1001 &1684453722
 PrefabInstance:
   m_ObjectHideFlags: 0

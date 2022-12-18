@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ public class DialogueActivater : MonoBehaviour
     private bool canActivate;
 
     public bool isPerson = true;
+    public bool isInteractionPoint = false;
 
     public bool shouldActivateAQuest;
     public string questToMark;
@@ -26,11 +28,27 @@ public class DialogueActivater : MonoBehaviour
 
         if (canActivate && Input.GetButtonDown("Fire1") && !DialogueManager.instance.dialogueBox.activeInHierarchy)
         {
+            if (isInteractionPoint)
+            {
+                PopulateInteractiveDialogue();
+            }
             DialogueManager.instance.ShowDialogue(lines, isPerson);
             DialogueManager.instance.shouldActivateQuestAtEnd(questToMark, markComplete);
 
         }
         
+    }
+
+    void PopulateInteractiveDialogue()
+    {
+
+
+
+
+        lines = new String[] { "I found the candlestick", "hmmm..." };
+
+        
+
     }
 
 
