@@ -213,7 +213,6 @@ GameObject:
   - component: {fileID: 8706413012646779032}
   - component: {fileID: 7322261793906013066}
   - component: {fileID: 1132469231}
-  - component: {fileID: 2117968952}
   - component: {fileID: 2062528231954131355}
   m_Layer: 0
   m_Name: GameManager
@@ -253,11 +252,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 453bec9e5da616c47a06d2a6bce9c288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerStats:
-  - {fileID: 8031117411707999563}
-  - {fileID: 4656602095645409311}
-  - {fileID: 3038929744811130228}
-  - {fileID: 8904002102370633100}
   gameMenuOpen: 0
   dialogueActive: 0
   fadingBetweenAreas: 0
@@ -284,150 +278,6 @@ MonoBehaviour:
   - go to the new town
   - meld a new job
   questMarkerComplete: 
---- !u!114 &2117968952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3597904208718001426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8fbc7750d4b7a94195f45369b13271e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  charNumber: 1
-  numberOfCharacters: 4
-  jobStringArray: []
-  valuesForTable: []
-  fighterCount: 0
-  healerCount: 0
-  rogueCount: 0
-  mageCount: 0
-  classTier: 0
-  currentMeldFirstPart: 
-  currentMeldSecondPart: 
-  currentJobDominantEssenceRoll1: 
-  currentJobDominantEssenceRoll2: 
-  currentJobDominantEssenceRoll3: 
-  currentClassName: 
-  newClassChoiceOne: 
-  newClassChoiceTwo: 
-  newClassChoiceThree: 
-  meld1FighterButton: {fileID: 0}
-  meld1HealerButton: {fileID: 0}
-  meld1RogueButton: {fileID: 0}
-  meld1MageButton: {fileID: 0}
-  meld2FighterButton: {fileID: 0}
-  meld2HealerButton: {fileID: 0}
-  meld2RogueButton: {fileID: 0}
-  meld2MageButton: {fileID: 0}
-  choiceOneButton: {fileID: 0}
-  choiceTwoButton: {fileID: 0}
-  choiceThreeButton: {fileID: 0}
-  meldButtonPanelOne: {fileID: 0}
-  cancelButtonPanelOne: {fileID: 0}
-  meldButtonPanelTwo: {fileID: 0}
-  cancelButtonPanelTwo: {fileID: 0}
-  characterButtons: []
-  choiceOneDescription: {fileID: 0}
-  choiceTwoDescripton: {fileID: 0}
-  choiceThreeDescription: {fileID: 0}
-  choiceOneButtonText: {fileID: 0}
-  choiceTwoButtonText: {fileID: 0}
-  choiceThreeButtonText: {fileID: 0}
-  choicePanelHeader: {fileID: 0}
-  meldOneIsSelected: 0
-  meldTwoIsSelected: 0
-  classChoiceIsSelected: 0
-  isTitle: 0
-  isPrefix: 0
-  isMainJob: 0
-  isPlayerChoice: 0
-  jobPrefixOrTitleInt: 0
-  whatIsBeingUpdated: 
-  showReRollPanel: 0
-  jobA: []
-  jobB: []
-  jobC: []
-  jobD: []
-  jobAB: []
-  jobAC: []
-  jobAD: []
-  jobBC: []
-  jobBD: []
-  jobCD: []
-  jobAAB: []
-  jobAAC: []
-  jobAAD: []
-  jobBBA: []
-  jobBBC: []
-  jobBBD: []
-  jobCCA: []
-  jobCCB: []
-  jobCCD: []
-  jobDDA: []
-  jobDDB: []
-  jobDDC: []
-  jobABC: []
-  jobABD: []
-  jobACD: []
-  jobBCD: []
-  titlesA: []
-  titlesB: []
-  titlesC: []
-  titlesD: []
-  titlesAB: []
-  titlesAC: []
-  titlesAD: []
-  titlesBC: []
-  titlesBD: []
-  titlesCD: []
-  titlesAAB: []
-  titlesAAC: []
-  titlesAAD: []
-  titlesBBA: []
-  titlesBBC: []
-  titlesBBD: []
-  titlesCCA: []
-  titlesCCB: []
-  titlesCCD: []
-  titlesDDA: []
-  titlesDDB: []
-  titlesDDC: []
-  titlesABC: []
-  titlesABD: []
-  titlesACD: []
-  titlesBCD: []
-  prefixesA: []
-  prefixesB: []
-  prefixesC: []
-  prefixesD: []
-  prefixesAB: []
-  prefixesAC: []
-  prefixesAD: []
-  prefixesBC: []
-  prefixesBD: []
-  prefixesCD: []
-  prefixesAAB: []
-  prefixesAAC: []
-  prefixesAAD: []
-  prefixesBBA: []
-  prefixesBBC: []
-  prefixesBBD: []
-  prefixesCCA: []
-  prefixesCCB: []
-  prefixesCCD: []
-  prefixesDDA: []
-  prefixesDDB: []
-  prefixesDDC: []
-  prefixesABC: []
-  prefixesABD: []
-  prefixesACD: []
-  prefixesBCD: []
-  jobDescriptions: []
-  titleDescriptions: []
-  prefixDescriptions: []
 --- !u!114 &2062528231954131355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -440,6 +290,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83eb44e311b972941a3fdcf9f2f2ab58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weapons: []
+  suspects: []
+  places: []
+  unusedWeapons: []
+  unusedSuspects: []
+  unusedPlaces: []
 --- !u!1 &7195285201794927096
 GameObject:
   m_ObjectHideFlags: 0

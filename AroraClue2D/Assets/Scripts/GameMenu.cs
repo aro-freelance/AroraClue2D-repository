@@ -18,11 +18,27 @@ public class GameMenu : MonoBehaviour
     public GameObject theMenu;
     public GameObject[] windows;
 
+    public GameObject guessWindow;
+    public GameObject guessButton;
+
     public TMP_InputField notebookTMPInputField;
     public TMP_Text playerNameHeader;
     public TMP_Text suspectListText;
     public TMP_Text weaponListText;
     public TMP_Text locationListText;
+
+    public TMP_Dropdown weaponDropdown;
+    public TMP_Dropdown suspectDropdown;
+    public TMP_Dropdown locationDropdown;
+
+
+    private string userAnswerWeapon;
+    private string userAnswerSuspect;
+    private string userAnswerLocation;
+
+    private List<string> weaponList;
+    private List<string> suspectList;
+    private List<string> locationList;
 
 
     //TODO: add a section to show other players. click on other players to interact... design the sort of interactions we want.
@@ -49,19 +65,30 @@ public class GameMenu : MonoBehaviour
             }
             else
             {
-                notebookTMPInputField.pointSize = 50;
-                playerNameHeader.text = playerName;
-
-                setListText(RandomGameElementsManager.instance.suspects, suspectListText);
-                setListText(RandomGameElementsManager.instance.weapons, weaponListText);
-                setListText(RandomGameElementsManager.instance.places, locationListText);
-
-
-                theMenu.SetActive(true);
-                GameManager.Instance.gameMenuOpen = true;
+                ShowMenu();
             }
         }
     }
+
+    public void ShowMenu()
+    {
+        notebookTMPInputField.pointSize = 50;
+        playerNameHeader.text = playerName;
+
+        setListText(RandomGameElementsManager.instance.suspects, suspectListText);
+        setListText(RandomGameElementsManager.instance.weapons, weaponListText);
+        setListText(RandomGameElementsManager.instance.places, locationListText);
+
+        SetGuessDropdownLists();
+
+
+        theMenu.SetActive(true);
+        GameManager.Instance.gameMenuOpen = true;
+
+
+    }
+
+    //TODO: use the toggle window button to open and close the guess interface... setup in Unity Editor
 
 
     public void ToggleWindow(int windowNumber)
@@ -110,6 +137,36 @@ public class GameMenu : MonoBehaviour
         }
 
         textLabel.text = text;
+
+    }
+
+    void SetGuessDropdownLists()
+    {
+        weaponList = RandomGameElementsManager.instance.weapons.ToList();
+        suspectList = RandomGameElementsManager.instance.suspects.ToList();
+        locationList = RandomGameElementsManager.instance.places.ToList();
+
+        Debug.Log("w0: " + weaponList[0] + "s0: " + suspectList[0] + "l0: " + locationList[0]);
+
+        weaponDropdown.ClearOptions();
+        suspectDropdown.ClearOptions();
+        locationDropdown.ClearOptions();
+
+        weaponDropdown.AddOptions(weaponList);
+        suspectDropdown.AddOptions(suspectList);
+        locationDropdown.AddOptions(locationList);
+    }
+
+    public void SubmitGuessButton()
+    {
+        userAnswerWeapon = weaponList[weaponDropdown.value];
+        userAnswerSuspect = suspectList[suspectDropdown.value];
+        userAnswerLocation = locationList[locationDropdown.value];
+
+        Debug.Log("weapon: " + userAnswerWeapon + ". suspect: " + userAnswerSuspect + ". location: " + userAnswerLocation);
+
+
+        GameManager.Instance.submittedAnswer = true;
 
     }
 
