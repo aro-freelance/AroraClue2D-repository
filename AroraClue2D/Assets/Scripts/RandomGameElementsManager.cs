@@ -1,9 +1,12 @@
+
+using SuperSocket.ClientEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class RandomGameElementsManager : MonoBehaviour
 {
+    public static RandomGameElementsManager instance;
 
     public string[] weapons;
     public string[] suspects;
@@ -12,6 +15,10 @@ public class RandomGameElementsManager : MonoBehaviour
     string selectedWeapon = "";
     string selectedSuspect = "";
     string selectedPlace = "";
+
+    [HideInInspector] public string[] unusedWeapons;
+    [HideInInspector] public string[] unusedSuspects;
+    [HideInInspector] public string[] unusedPlaces;
 
 
     private void Start()
@@ -33,7 +40,38 @@ public class RandomGameElementsManager : MonoBehaviour
 
         Debug.Log("RandomizeNewGame: weapon: " + selectedWeapon + ". suspect: " + selectedSuspect + ". place: " + selectedPlace);
 
+
+
+        unusedWeapons = CreateUnusedList(weapons, selectedWeapon).RandomOrder();
+        unusedSuspects = CreateUnusedList(suspects, selectedSuspect).RandomOrder();
+        unusedPlaces = CreateUnusedList(places, selectedPlace).RandomOrder();
+
+
+        Debug.Log("RandomizeNewGame: [0] unusedW: " + unusedWeapons[0] + ". unusedS: " + unusedSuspects[0]
+            + ". unusedP: " + unusedPlaces[0]);
     }
+
+    string[] CreateUnusedList(string[] array, string selectedString)
+    {
+        List<string> newList = new List<string>();
+        int index = 0;
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (array[i] != selectedString)
+            {
+                newList.Add(array[i]);
+                index++;
+            }
+
+        }
+
+        string[] newArray = newList.ToArray();
+
+        return newArray;
+    }
+
+
 
 
 

@@ -94,23 +94,6 @@ public class Item : MonoBehaviour
     public bool wieldingTwoHandedWeapon;
 
 
-    
-
-
-
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void Use(int charToUseOn)
     {
         CharStats selectedchar = GameManager.Instance.playerStats[charToUseOn];

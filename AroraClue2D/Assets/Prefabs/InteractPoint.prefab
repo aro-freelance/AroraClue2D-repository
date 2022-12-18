@@ -215,9 +215,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e00d25cf8941754aa3ca55bf80a88cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  randomGameElementsManager: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
   lines: []
   isPerson: 0
   isInteractionPoint: 1
+  isSuspectInfo: 0
+  isWeaponInfo: 1
+  isPlaceInfo: 0
+  spawnNumber: 0
   shouldActivateAQuest: 0
   questToMark: 
   markComplete: 0
