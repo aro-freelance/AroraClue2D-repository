@@ -7,7 +7,6 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance;
 
-    public CharStats[] playerStats;
 
     //this creates three different bools at once.  cleaner than doing each separate. especially when they are all similar. 
     public bool gameMenuOpen, dialogueActive, fadingBetweenAreas;
@@ -146,7 +145,7 @@ public class GameManager : MonoBehaviour
                 Debug.LogError("Tag: Game Manager, AddItem. " +itemToAdd + " does not exist.");
             }
 
-            GameMenu.instance.ShowItems();
+            //GameMenu.instance.ShowItems();
         }
 
 
@@ -178,7 +177,7 @@ public class GameManager : MonoBehaviour
                 itemsInInventory[itemPosition] = "";
             }
 
-            GameMenu.instance.ShowItems();
+            //GameMenu.instance.ShowItems();
         }
         else
         {

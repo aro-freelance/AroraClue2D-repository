@@ -94,313 +94,313 @@ public class Item : MonoBehaviour
     public bool wieldingTwoHandedWeapon;
 
 
-    public void Use(int charToUseOn)
-    {
-        CharStats selectedchar = GameManager.Instance.playerStats[charToUseOn];
+    //public void Use(int charToUseOn)
+    //{
+    //    CharStats selectedchar = GameManager.Instance.playerStats[charToUseOn];
 
-        if (isPotion)
-        {
-            if (affectHP)
-            {
-                selectedchar.currentHP += amountToChange;
-                if(selectedchar.currentHP > selectedchar.maxHP)
-                {
-                    selectedchar.currentHP = selectedchar.maxHP;
-                }
-            }
-            if (affectMP)
-            {
-                selectedchar.currentMP += amountToChange;
-                if (selectedchar.currentMP > selectedchar.maxMP)
-                {
-                    selectedchar.currentMP = selectedchar.maxMP;
-                }
-            }
-        }
+    //    if (isPotion)
+    //    {
+    //        if (affectHP)
+    //        {
+    //            selectedchar.currentHP += amountToChange;
+    //            if(selectedchar.currentHP > selectedchar.maxHP)
+    //            {
+    //                selectedchar.currentHP = selectedchar.maxHP;
+    //            }
+    //        }
+    //        if (affectMP)
+    //        {
+    //            selectedchar.currentMP += amountToChange;
+    //            if (selectedchar.currentMP > selectedchar.maxMP)
+    //            {
+    //                selectedchar.currentMP = selectedchar.maxMP;
+    //            }
+    //        }
+    //    }
 
-        if (isWeapon)
-        {
-            if(isMainHand && isTwoHanded)
-            {
-                //if there is currently a weapon equipped
-                if (selectedchar.equippedWeapon != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedWeapon);
-                }
-                if(selectedchar.equippedOffhand != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedOffhand);
-                }
+    //    if (isWeapon)
+    //    {
+    //        if(isMainHand && isTwoHanded)
+    //        {
+    //            //if there is currently a weapon equipped
+    //            if (selectedchar.equippedWeapon != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedWeapon);
+    //            }
+    //            if(selectedchar.equippedOffhand != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedOffhand);
+    //            }
 
-                selectedchar.equippedWeapon = itemName;
-                selectedchar.weaponPower = weaponPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedWeapon = itemName;
+    //            selectedchar.weaponPower = weaponPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
-            if(isMainHand && !isOffHand)
-            {
-                //if there is currently a weapon equipped
-                if (selectedchar.equippedWeapon != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedWeapon);
-                }
+    //        }
+    //        if(isMainHand && !isOffHand)
+    //        {
+    //            //if there is currently a weapon equipped
+    //            if (selectedchar.equippedWeapon != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedWeapon);
+    //            }
 
-                selectedchar.equippedWeapon = itemName;
-                selectedchar.weaponPower = weaponPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedWeapon = itemName;
+    //            selectedchar.weaponPower = weaponPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
-            if(isOffHand && !isMainHand)
-            {
-                //if there is currently a weapon equipped
-                if (selectedchar.equippedOffhand != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedOffhand);
-                }
+    //        }
+    //        if(isOffHand && !isMainHand)
+    //        {
+    //            //if there is currently a weapon equipped
+    //            if (selectedchar.equippedOffhand != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedOffhand);
+    //            }
 
-                selectedchar.equippedOffhand = itemName;
-                selectedchar.offhandPower = weaponPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedOffhand = itemName;
+    //            selectedchar.offhandPower = weaponPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
-            if(isMainHand && isOffHand)
-            {
-                //open menu to select where to equip
-                //if player selects mainhand
-                //run mainhand equip code
-                //if player selects offhand
-                //run offhand equip code
+    //        }
+    //        if(isMainHand && isOffHand)
+    //        {
+    //            //open menu to select where to equip
+    //            //if player selects mainhand
+    //            //run mainhand equip code
+    //            //if player selects offhand
+    //            //run offhand equip code
 
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
+    //        }
 
             
-        }
+    //    }
 
-        if (isArmor)
-        {
+    //    if (isArmor)
+    //    {
 
-            if (isHead)
-            {
-                //if there is currently armor equipped in that slot
-                if (selectedchar.equippedHead != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedHead);
-                }
+    //        if (isHead)
+    //        {
+    //            //if there is currently armor equipped in that slot
+    //            if (selectedchar.equippedHead != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedHead);
+    //            }
 
-                selectedchar.equippedHead = itemName;
-                selectedchar.headArmorPower = armorPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
-            }
-            if (isBody)
-            {
-                //if there is currently armor equipped in that slot
-                if (selectedchar.equippedBody != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedBody);
-                }
+    //            selectedchar.equippedHead = itemName;
+    //            selectedchar.headArmorPower = armorPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
+    //        }
+    //        if (isBody)
+    //        {
+    //            //if there is currently armor equipped in that slot
+    //            if (selectedchar.equippedBody != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedBody);
+    //            }
 
-                selectedchar.equippedBody= itemName;
-                selectedchar.bodyArmorPower = armorPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedBody= itemName;
+    //            selectedchar.bodyArmorPower = armorPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
-            if (isHands)
-            {
-                //if there is currently armor equipped in that slot
-                if (selectedchar.equippedHands != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedHands);
-                }
+    //        }
+    //        if (isHands)
+    //        {
+    //            //if there is currently armor equipped in that slot
+    //            if (selectedchar.equippedHands != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedHands);
+    //            }
 
-                selectedchar.equippedHands = itemName;
-                selectedchar.handsArmorPower = armorPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
-            }
-            if (isLegs)
-            {
-                //if there is currently armor equipped in that slot
-                if (selectedchar.equippedLegs != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedLegs);
-                }
+    //            selectedchar.equippedHands = itemName;
+    //            selectedchar.handsArmorPower = armorPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
+    //        }
+    //        if (isLegs)
+    //        {
+    //            //if there is currently armor equipped in that slot
+    //            if (selectedchar.equippedLegs != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedLegs);
+    //            }
 
-                selectedchar.equippedLegs = itemName;
-                selectedchar.legsArmorPower = armorPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedLegs = itemName;
+    //            selectedchar.legsArmorPower = armorPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
-            if (isFeet)
-            {
-                //if there is currently armor equipped in that slot
-                if (selectedchar.equippedFeet != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedFeet);
-                }
+    //        }
+    //        if (isFeet)
+    //        {
+    //            //if there is currently armor equipped in that slot
+    //            if (selectedchar.equippedFeet != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedFeet);
+    //            }
 
-                selectedchar.equippedFeet = itemName;
-                selectedchar.feetArmorPower = armorPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedFeet = itemName;
+    //            selectedchar.feetArmorPower = armorPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
-            if (isAccessory)
-            {
-                //if there is currently armor equipped in that slot
-                if (selectedchar.equippedAccessory != "")
-                {
-                    GameManager.Instance.AddItem(selectedchar.equippedAccessory);
-                }
+    //        }
+    //        if (isAccessory)
+    //        {
+    //            //if there is currently armor equipped in that slot
+    //            if (selectedchar.equippedAccessory != "")
+    //            {
+    //                GameManager.Instance.AddItem(selectedchar.equippedAccessory);
+    //            }
 
-                selectedchar.equippedAccessory = itemName;
-                selectedchar.accessoryArmorPower = armorPower;
-                //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
-                GameManager.Instance.RemoveItem(itemName);
+    //            selectedchar.equippedAccessory = itemName;
+    //            selectedchar.accessoryArmorPower = armorPower;
+    //            //the item is now equipped and not in inventory. it will return to inventory if/when it is unequipped. for now we remove it from inventory
+    //            GameManager.Instance.RemoveItem(itemName);
 
-            }
+    //        }
             
-        }
+    //    }
 
-        if (affectJob)
-        {
-            //change job to new job
-        }
+    //    if (affectJob)
+    //    {
+    //        //change job to new job
+    //    }
 
-        if (affectsStats)
-        {
-            if (affectStr)
-            {
-                selectedchar.charStr += amountToChange;
+    //    if (affectsStats)
+    //    {
+    //        if (affectStr)
+    //        {
+    //            selectedchar.charStr += amountToChange;
 
-                if (isTempBuff)
-                {
-                    //wait for durationOfTempAffect time
+    //            if (isTempBuff)
+    //            {
+    //                //wait for durationOfTempAffect time
 
-                    selectedchar.charStr -= amountToChange;
-                }
+    //                selectedchar.charStr -= amountToChange;
+    //            }
 
-            }
-            if (affectDex)
-            {
+    //        }
+    //        if (affectDex)
+    //        {
 
-            }
-            if (affectVit)
-            {
+    //        }
+    //        if (affectVit)
+    //        {
 
-            }
-            if (affectAgi)
-            {
+    //        }
+    //        if (affectAgi)
+    //        {
 
-            }
-            if (affectInt)
-            {
+    //        }
+    //        if (affectInt)
+    //        {
 
-            }
-            if (affectMnd)
-            {
+    //        }
+    //        if (affectMnd)
+    //        {
 
-            }
-            if (affectChr)
-            {
+    //        }
+    //        if (affectChr)
+    //        {
 
-            }
-            if (affectAttack)
-            {
+    //        }
+    //        if (affectAttack)
+    //        {
 
-            }
-            if (affectDefense)
-            {
+    //        }
+    //        if (affectDefense)
+    //        {
 
-            }
-            if (affectEvasion)
-            {
+    //        }
+    //        if (affectEvasion)
+    //        {
 
-            }
-            if (affectAccuracy)
-            {
+    //        }
+    //        if (affectAccuracy)
+    //        {
 
-            }
-            if (affectMAttack)
-            {
+    //        }
+    //        if (affectMAttack)
+    //        {
 
-            }
-            if (affectMDefense)
-            {
+    //        }
+    //        if (affectMDefense)
+    //        {
 
-            }
-            if (affectMEvasion)
-            {
+    //        }
+    //        if (affectMEvasion)
+    //        {
 
-            }
-            if (affectMAccuracy)
-            {
+    //        }
+    //        if (affectMAccuracy)
+    //        {
 
-            }
-            if (affectSpeed)
-            {
+    //        }
+    //        if (affectSpeed)
+    //        {
 
-            }
-            if (affectLuck)
-            {
+    //        }
+    //        if (affectLuck)
+    //        {
 
-            }
-            if (affectElement)
-            {
+    //        }
+    //        if (affectElement)
+    //        {
 
-            }
-            if (affectXP)
-            {
+    //        }
+    //        if (affectXP)
+    //        {
 
-            }
+    //        }
 
-        }
+    //    }
 
-        if (isCraftMat)
-        {
-            //open the crafting menu
-            //TODO make a crafting system
-        }
+    //    if (isCraftMat)
+    //    {
+    //        //open the crafting menu
+    //        //TODO make a crafting system
+    //    }
 
-        if (isClassMeldItem)
-        {
+    //    if (isClassMeldItem)
+    //    {
 
-            //open class meld system
-            JobManager.instance.OpenMeld(charToUseOn);
+    //        //open class meld system
+    //        JobManager.instance.OpenMeld(charToUseOn);
 
-        }
+    //    }
 
-        if (isScroll)
-        {
-            //use ability on scroll
-            //destroy item
-        }
+    //    if (isScroll)
+    //    {
+    //        //use ability on scroll
+    //        //destroy item
+    //    }
 
-        if (isAbilityUnlocker)
-        {
-            //unlock ability for character who used if they have ability to learn
-        }
+    //    if (isAbilityUnlocker)
+    //    {
+    //        //unlock ability for character who used if they have ability to learn
+    //    }
 
-        if (isDisposable)
-        {
-            numberOfUses = numberOfUses - 1;
-            if(numberOfUses <= 0)
-            {
-                GameManager.Instance.RemoveItem(itemName);
-            }
-        }
+    //    if (isDisposable)
+    //    {
+    //        numberOfUses = numberOfUses - 1;
+    //        if(numberOfUses <= 0)
+    //        {
+    //            GameManager.Instance.RemoveItem(itemName);
+    //        }
+    //    }
 
         
 
-    }
+    //}
 
 
 }

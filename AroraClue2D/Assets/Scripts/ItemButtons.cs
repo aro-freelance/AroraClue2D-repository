@@ -13,24 +13,13 @@ public class ItemButtons : MonoBehaviour
 
 
 
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void Press()
     {
         if(GameManager.Instance.itemsInInventory[buttonNumber] != "")
         {
-            GameMenu.instance.SelectItem(GameManager.Instance.GetItemDetails(GameManager.Instance.itemsInInventory[buttonNumber]));
+            Debug.Log("pressed Item Button number " + buttonNumber);
+
+            //GameMenu.instance.SelectItem(GameManager.Instance.GetItemDetails(GameManager.Instance.itemsInInventory[buttonNumber]));
         }
 
     }

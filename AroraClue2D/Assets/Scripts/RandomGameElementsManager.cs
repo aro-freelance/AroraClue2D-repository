@@ -23,7 +23,7 @@ public class RandomGameElementsManager : MonoBehaviour
 
     private void Start()
     {
-
+        instance = this;
 
         RandomizeNewGame();
 
