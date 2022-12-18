@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class DialogueActivater : MonoBehaviour
 {
+    //Test laptop github
 
     public RandomGameElementsManager randomGameElementsManager;
 
