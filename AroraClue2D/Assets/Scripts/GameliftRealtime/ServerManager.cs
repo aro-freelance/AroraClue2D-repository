@@ -11,10 +11,9 @@ using Unity.VisualScripting;
 
 public class ServerManager : MonoBehaviour
 {
-    public static PrivateConsts privateConsts;
 
 
-    string GameSessionPlacementEndpoint = privateConsts.GameSessionPlacementEndpoint;
+    string GameSessionPlacementEndpoint;
 
     private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, port: 0);
     private SQSMessageProcessing _sqsMessageProcessing;
@@ -60,6 +59,79 @@ public class ServerManager : MonoBehaviour
 
     //public const int PLAY_CARD_OP = 300;
     //public const int DRAW_CARD_ACK_OP = 301;
+
+    public static ServerManager instance;
+
+
+    void Start()
+    {
+
+        instance = this;
+
+        DontDestroyOnLoad(gameObject);
+
+        GameSessionPlacementEndpoint = PrivateConsts.instance.GameSessionPlacementEndpoint;
+
+
+        Debug.Log("Starting...");
+        _apiManager = FindObjectOfType<APIManager>();
+        _sqsMessageProcessing = FindObjectOfType<SQSMessageProcessing>();
+
+
+
+        //_findMatchButton = GameObject.Find("FindMatch").GetComponent<Button>();
+        //_findMatchButton.onClick.AddListener(OnFindMatchPressed);
+
+        //_playCardButton = GameObject.Find("PlayCard").GetComponent<Button>();
+        //_playCardButton.onClick.AddListener(OnPlayCardPressed);
+        //_playCardButton.gameObject.SetActive(false);
+
+        //_quitButton = GameObject.Find("Quit").GetComponent<Button>();
+        //_quitButton.onClick.AddListener(OnQuitPressed);
+
+        _playerId = System.Guid.NewGuid().ToString();
+
+        BuildCardsIntoUI();
+
+        OnFindMatchPressed();
+    }
+
+    void Update()
+    {
+        if (_findingMatch)
+        {
+            _findingMatch = false;
+            //_findMatchButton.enabled = false;
+            //_findMatchButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Searching...";
+        }
+
+        if (_realTimeClient != null && _realTimeClient.GameStarted)
+        {
+            //_playCardButton.gameObject.SetActive(true);
+            _realTimeClient.GameStarted = false;
+        }
+
+        if (_updateRemotePlayerId)
+        {
+            _updateRemotePlayerId = false;
+            //remoteClientPlayerName.text = _remotePlayerId;
+        }
+
+        // Card plays - there's a better way to do this...
+        if (_processCardPlay)
+        {
+            _processCardPlay = false;
+
+            ProcessCardPlay();
+        }
+
+        // determine match results once game is over
+        if (this._gameOver == true)
+        {
+            this._gameOver = false;
+            DisplayMatchResults();
+        }
+    }
 
     public async void OnFindMatchPressed()
     {
@@ -196,42 +268,7 @@ public class ServerManager : MonoBehaviour
         this._gameOver = true;
     }
 
-    void Update()
-    {
-        if (_findingMatch)
-        {
-            _findingMatch = false;
-            //_findMatchButton.enabled = false;
-            //_findMatchButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Searching...";
-        }
 
-        if (_realTimeClient != null && _realTimeClient.GameStarted)
-        {
-            //_playCardButton.gameObject.SetActive(true);
-            _realTimeClient.GameStarted = false;
-        }
-
-        if (_updateRemotePlayerId)
-        {
-            _updateRemotePlayerId = false;
-            //remoteClientPlayerName.text = _remotePlayerId;
-        }
-
-        // Card plays - there's a better way to do this...
-        if (_processCardPlay)
-        {
-            _processCardPlay = false;
-
-            ProcessCardPlay();
-        }
-
-        // determine match results once game is over
-        if (this._gameOver == true)
-        {
-            this._gameOver = false;
-            DisplayMatchResults();
-        }
-    }
 
     private void ProcessCardPlay()
     {
@@ -304,30 +341,7 @@ public class ServerManager : MonoBehaviour
         //_realTimeClient.SendMessage(PLAY_CARD_OP, realtimePayload);
     }
 
-    void Start()
-    {
-        Debug.Log("Starting...");
-        _apiManager = FindObjectOfType<APIManager>();
-        _sqsMessageProcessing = FindObjectOfType<SQSMessageProcessing>();
 
-
-
-        //_findMatchButton = GameObject.Find("FindMatch").GetComponent<Button>();
-        //_findMatchButton.onClick.AddListener(OnFindMatchPressed);
-
-        //_playCardButton = GameObject.Find("PlayCard").GetComponent<Button>();
-        //_playCardButton.onClick.AddListener(OnPlayCardPressed);
-        //_playCardButton.gameObject.SetActive(false);
-
-        //_quitButton = GameObject.Find("Quit").GetComponent<Button>();
-        //_quitButton.onClick.AddListener(OnQuitPressed);
-
-        _playerId = System.Guid.NewGuid().ToString();
-
-        BuildCardsIntoUI();
-
-        OnFindMatchPressed();
-    }
 
     public static int GetAvailableUdpPort()
     {

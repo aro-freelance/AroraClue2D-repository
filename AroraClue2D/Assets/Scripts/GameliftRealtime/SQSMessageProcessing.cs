@@ -12,10 +12,9 @@ using Newtonsoft.Json;
 public class SQSMessageProcessing : MonoBehaviour
 {
 
-    public static PrivateConsts privateConsts;
 
-    private string IdentityPool = privateConsts.IdentityPool;
-    private string SQSURL = privateConsts.SQSURL;
+    private string IdentityPool; 
+    private string SQSURL;
 
 
     private const int MaxMessages = 1;
@@ -24,6 +23,20 @@ public class SQSMessageProcessing : MonoBehaviour
     private AmazonSQSClient _sqsClient;
     private Coroutine _fulfillmentFailsafeCoroutine;
     private bool _fulfillmentMessageReceived = false;
+
+    void Start()
+    {
+
+        IdentityPool = PrivateConsts.instance.IdentityPool;
+        SQSURL = PrivateConsts.instance.SQSURL;
+
+        CognitoAWSCredentials credentials = new CognitoAWSCredentials(
+            IdentityPool, // Your Identity pool ID
+            RegionEndpoint.USEast1 // Your GameLift Region
+        );
+
+        _sqsClient = new AmazonSQSClient(credentials, Amazon.RegionEndpoint.USEast1);
+    }
 
     public async Task<PlayerPlacementFulfillmentInfo> SubscribeToFulfillmentNotifications(string placementId)
     {
@@ -169,15 +182,7 @@ public class SQSMessageProcessing : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        CognitoAWSCredentials credentials = new CognitoAWSCredentials(
-            IdentityPool, // Your Identity pool ID
-            RegionEndpoint.USEast1 // Your GameLift Region
-        );
-
-        _sqsClient = new AmazonSQSClient(credentials, Amazon.RegionEndpoint.USEast1);
-    }
+   
 
     private static string ParseGameSessionIdFromArn(string gameSessionArn)
     {

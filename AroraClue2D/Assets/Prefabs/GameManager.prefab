@@ -261,11 +261,19 @@ MonoBehaviour:
   numberOfEachItem: 
   referenceItems: []
   leadDetective: {fileID: 6732661876288537154, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
-  timerObject: {fileID: 0}
+  timerObjectOutOfMenu: {fileID: 0}
+  timerObjectInMenu: {fileID: 0}
   currentMoney: 0
+  timerIsRunning: 0
+  secondTimerIsRunning: 0
   guessInterval: 1
   submittedAnswer: 0
-  isReadyToResumeAfterCutscene: 0
+  isReadyToStartCountdown: 0
+  isReadyToCheckAnswers: 0
+  isReadyToResume: 0
+  isReadyToEndGame: 0
+  defaultAutoplayDelay: 4
+  isGuessCorrect: 0
 --- !u!114 &1132469231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,6 +308,9 @@ MonoBehaviour:
   weapons: []
   suspects: []
   places: []
+  selectedWeapon: 
+  selectedSuspect: 
+  selectedPlace: 
   unusedWeapons: []
   unusedSuspects: []
   unusedPlaces: []
