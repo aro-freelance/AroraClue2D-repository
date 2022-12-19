@@ -93,6 +93,10 @@ public class ServerManager : MonoBehaviour
 
         BuildCardsIntoUI();
 
+
+
+
+        //TODO: this should be moved to a button on the main menu rather than called on start eventually
         OnFindMatchPressed();
     }
 
@@ -143,7 +147,7 @@ public class ServerManager : MonoBehaviour
         // Debug.Log(jsonPostData);
 
         //localClientPlayerName.text = _playerId;
-        Debug.Log("local client player name" + _playerId);
+        //Debug.Log("local client player name" + _playerId);
 
 
         string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
@@ -372,96 +376,98 @@ public class ServerManager : MonoBehaviour
     }
 }
 
-public class MatchStats
-{
-    public List<string> localPlayerCardsPlayed = new List<string>();
-    public List<string> remotePlayerCardsPlayed = new List<string>();
-}
 
-[System.Serializable]
-public class FindMatch
-{
-    public string opCode;
-    public string playerId;
-    public FindMatch() { }
-    public FindMatch(string opCodeIn, string playerIdIn)
-    {
-        this.opCode = opCodeIn;
-        this.playerId = playerIdIn;
-    }
-}
 
-[System.Serializable]
-public class ConnectMessage
-{
-    public string playerConnected;
-    public ConnectMessage() { }
-    public ConnectMessage(string playerConnectedIn)
-    {
-        this.playerConnected = playerConnectedIn;
-    }
-}
+//public class MatchStats
+//{
+//    public List<string> localPlayerCardsPlayed = new List<string>();
+//    public List<string> remotePlayerCardsPlayed = new List<string>();
+//}
 
-[System.Serializable]
-public class StartMatch
-{
-    public string remotePlayerId;
-    public StartMatch() { }
-    public StartMatch(string remotePlayerIdIn)
-    {
-        this.remotePlayerId = remotePlayerIdIn;
-    }
-}
+//[System.Serializable]
+//public class FindMatch
+//{
+//    public string opCode;
+//    public string playerId;
+//    public FindMatch() { }
+//    public FindMatch(string opCodeIn, string playerIdIn)
+//    {
+//        this.opCode = opCodeIn;
+//        this.playerId = playerIdIn;
+//    }
+//}
 
-[System.Serializable]
-public class RealtimePayload
-{
-    public string playerId;
-    // Other fields you wish to pass as payload to the realtime server
-    public RealtimePayload() { }
-    public RealtimePayload(string playerIdIn)
-    {
-        this.playerId = playerIdIn;
-    }
-}
+//[System.Serializable]
+//public class ConnectMessage
+//{
+//    public string playerConnected;
+//    public ConnectMessage() { }
+//    public ConnectMessage(string playerConnectedIn)
+//    {
+//        this.playerConnected = playerConnectedIn;
+//    }
+//}
 
-[System.Serializable]
-public class CardPlayed
-{
-    public int card;
-    public string playedBy;
-    public int plays;
+//[System.Serializable]
+//public class StartMatch
+//{
+//    public string remotePlayerId;
+//    public StartMatch() { }
+//    public StartMatch(string remotePlayerIdIn)
+//    {
+//        this.remotePlayerId = remotePlayerIdIn;
+//    }
+//}
 
-    public CardPlayed() { }
-    public CardPlayed(int cardIn, string playedByIn, int playsIn)
-    {
-        this.card = cardIn;
-        this.playedBy = playedByIn;
-        this.plays = playsIn;
-    }
-}
+//[System.Serializable]
+//public class RealtimePayload
+//{
+//    public string playerId;
+//    // Other fields you wish to pass as payload to the realtime server
+//    public RealtimePayload() { }
+//    public RealtimePayload(string playerIdIn)
+//    {
+//        this.playerId = playerIdIn;
+//    }
+//}
 
-[System.Serializable]
-public class MatchResults
-{
-    public string playerOneId;
-    public string playerTwoId;
+//[System.Serializable]
+//public class CardPlayed
+//{
+//    public int card;
+//    public string playedBy;
+//    public int plays;
 
-    public string playerOneScore;
-    public string playerTwoScore;
+//    public CardPlayed() { }
+//    public CardPlayed(int cardIn, string playedByIn, int playsIn)
+//    {
+//        this.card = cardIn;
+//        this.playedBy = playedByIn;
+//        this.plays = playsIn;
+//    }
+//}
 
-    public string winnerId;
+//[System.Serializable]
+//public class MatchResults
+//{
+//    public string playerOneId;
+//    public string playerTwoId;
 
-    public MatchResults() { }
-    public MatchResults(string playerOneIdIn, string playerTwoIdIn, string playerOneScoreIn, string playerTwoScoreIn, string winnerIdIn)
-    {
-        this.playerOneId = playerOneIdIn;
-        this.playerTwoId = playerTwoIdIn;
-        this.playerOneScore = playerOneScoreIn;
-        this.playerTwoScore = playerTwoScoreIn;
-        this.winnerId = winnerIdIn;
-    }
-}
+//    public string playerOneScore;
+//    public string playerTwoScore;
+
+//    public string winnerId;
+
+//    public MatchResults() { }
+//    public MatchResults(string playerOneIdIn, string playerTwoIdIn, string playerOneScoreIn, string playerTwoScoreIn, string winnerIdIn)
+//    {
+//        this.playerOneId = playerOneIdIn;
+//        this.playerTwoId = playerTwoIdIn;
+//        this.playerOneScore = playerOneScoreIn;
+//        this.playerTwoScore = playerTwoScoreIn;
+//        this.winnerId = winnerIdIn;
+//    }
+//}
 
 
 

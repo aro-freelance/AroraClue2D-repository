@@ -10,8 +10,6 @@ public class APIManager : MonoBehaviour
 
         var formData = System.Text.Encoding.UTF8.GetBytes(postData);
 
-        Debug.Log("api: " + api);
-
         UnityWebRequest webRequest = UnityWebRequest.Post(api, "");
 
 

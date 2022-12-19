@@ -33,6 +33,8 @@ public class RealTimeClient
     public event EventHandler<RemotePlayerIdEventArgs> RemotePlayerIdEventHandler;
     public event EventHandler<GameOverEventArgs> GameOverEventHandler;
 
+    //public event EventHandler<CLASS> name;
+
     /// <summary>
     /// Initialize a client for GameLift Realtime and connects to a player session.
     /// </summary>

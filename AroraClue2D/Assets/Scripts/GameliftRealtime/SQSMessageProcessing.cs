@@ -9,6 +9,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
 
+ // SQS supports programmatic sending of messages via web service applications as a way to communicate over the Internet
+ 
+
 public class SQSMessageProcessing : MonoBehaviour
 {
 
