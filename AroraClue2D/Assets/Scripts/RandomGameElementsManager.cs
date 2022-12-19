@@ -12,9 +12,9 @@ public class RandomGameElementsManager : MonoBehaviour
     public string[] suspects;
     public string[] places;
 
-    string selectedWeapon = "";
-    string selectedSuspect = "";
-    string selectedPlace = "";
+    public string selectedWeapon = "";
+    public string selectedSuspect = "";
+    public string selectedPlace = "";
 
     [HideInInspector] public string[] unusedWeapons;
     [HideInInspector] public string[] unusedSuspects;

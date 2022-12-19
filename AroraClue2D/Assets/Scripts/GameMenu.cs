@@ -180,6 +180,29 @@ public class GameMenu : MonoBehaviour
 
         Debug.Log("weapon: " + userAnswerWeapon + ". suspect: " + userAnswerSuspect + ". location: " + userAnswerLocation);
 
+        string correctWeapon = RandomGameElementsManager.instance.selectedWeapon;
+        string correctPerson = RandomGameElementsManager.instance.selectedSuspect;
+        string correctLocation = RandomGameElementsManager.instance.selectedPlace;
+
+        //if user guess is correct
+        if( userAnswerWeapon == correctWeapon &&
+            userAnswerSuspect == correctPerson &&
+            userAnswerLocation == correctLocation)
+        {
+
+            //set bool in GameManager
+            GameManager.Instance.isGuessCorrect = true;
+
+        }
+        else
+        {
+            //set bool in GameManager
+            GameManager.Instance.isGuessCorrect = false;
+        }
+
+        guessButton.SetActive(false);
+        guessWindow.SetActive(false);
+        CloseMenu();
 
         GameManager.Instance.submittedAnswer = true;
 

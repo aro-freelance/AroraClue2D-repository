@@ -48,6 +48,8 @@ public class GameManager : MonoBehaviour
 
     public float defaultAutoplayDelay = 4; //seconds
 
+    public bool isGuessCorrect = false;
+
 
     // Start is called before the first frame update
     void Start()
@@ -228,8 +230,9 @@ public class GameManager : MonoBehaviour
         timerObjectOutOfMenu.SetActive(false);
         timer2 = 0;
 
+
         //TODO: await check on server if any players have not submitted an answer
-        bool notAllAnswered = true; //TODO: set to answer from server method
+        bool notAllAnswered = !submittedAnswer; //TODO: set to answer from server method
         if (notAllAnswered)
         {
             NoAnswerSubmittedCutscene();
@@ -241,13 +244,14 @@ public class GameManager : MonoBehaviour
 
     }
 
+
     async void TriggerCheckAnswers()
     {
         //only host should run the timers and trigger the events
         if (isHost)
         {   
             //TODO: await check if any of the submitted answers are correct
-            bool correctAnswerReceived = false; //TODO: set using server method
+            bool correctAnswerReceived = isGuessCorrect; //TODO: set using server method.. check all users
             string winningPlayerName = "WinnerName";
 
             //if there is a correct answer, end the game and show that player is the winner, through dialogue
