@@ -32,12 +32,19 @@ public class PlayerController : MonoBehaviour {
 
         if (canMove)
         {
+            if (!myAnimator.enabled)
+            {
+                myAnimator.enabled = true;
+            }
+            
+
             PlayerMovement();
         }
         else
         {
             //this sets speed to zero so we can't slide without control when movement is turned off
             theRB.velocity = Vector2.zero;
+            myAnimator.enabled = false;
         }
        
     }

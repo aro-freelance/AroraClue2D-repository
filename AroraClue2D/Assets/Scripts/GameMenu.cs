@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public class GameMenu : MonoBehaviour
 {
+
     public static GameMenu instance;
 
     public int numberOfCharacters = 4;
@@ -20,6 +21,7 @@ public class GameMenu : MonoBehaviour
 
     public GameObject guessWindow;
     public GameObject guessButton;
+    public Text guessButtonText;
 
     public TMP_InputField notebookTMPInputField;
     public TMP_Text playerNameHeader;
@@ -68,6 +70,16 @@ public class GameMenu : MonoBehaviour
                 ShowMenu();
             }
         }
+
+        if (guessWindow.activeInHierarchy && guessButton.activeInHierarchy)
+        {
+            guessButtonText.text = "Show Notes";
+        }
+        else if (!guessWindow.activeInHierarchy && guessButton.activeInHierarchy)
+        {
+            guessButtonText.text = "Show Guess";
+        }
+
     }
 
     public void ShowMenu()
@@ -81,6 +93,11 @@ public class GameMenu : MonoBehaviour
 
         SetGuessDropdownLists();
 
+
+        if (GameManager.Instance.secondTimerIsRunning)
+        {
+            guessWindow.SetActive(true);
+        }
 
         theMenu.SetActive(true);
         GameManager.Instance.gameMenuOpen = true;
@@ -145,8 +162,6 @@ public class GameMenu : MonoBehaviour
         weaponList = RandomGameElementsManager.instance.weapons.ToList();
         suspectList = RandomGameElementsManager.instance.suspects.ToList();
         locationList = RandomGameElementsManager.instance.places.ToList();
-
-        Debug.Log("w0: " + weaponList[0] + "s0: " + suspectList[0] + "l0: " + locationList[0]);
 
         weaponDropdown.ClearOptions();
         suspectDropdown.ClearOptions();

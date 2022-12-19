@@ -252,13 +252,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 453bec9e5da616c47a06d2a6bce9c288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerNumber: 0
   gameMenuOpen: 0
   dialogueActive: 0
+  cutsceneActive: 0
   fadingBetweenAreas: 0
   itemsInInventory: []
   numberOfEachItem: 
   referenceItems: []
+  leadDetective: {fileID: 6732661876288537154, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
+  timerObject: {fileID: 0}
   currentMoney: 0
+  guessInterval: 1
+  submittedAnswer: 0
+  isReadyToResumeAfterCutscene: 0
 --- !u!114 &1132469231
 MonoBehaviour:
   m_ObjectHideFlags: 0

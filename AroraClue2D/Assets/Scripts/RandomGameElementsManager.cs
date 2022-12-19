@@ -47,8 +47,6 @@ public class RandomGameElementsManager : MonoBehaviour
         unusedPlaces = CreateUnusedList(places, selectedPlace).RandomOrder();
 
 
-        Debug.Log("RandomizeNewGame: [0] unusedW: " + unusedWeapons[0] + ". unusedS: " + unusedSuspects[0]
-            + ". unusedP: " + unusedPlaces[0]);
     }
 
     string[] CreateUnusedList(string[] array, string selectedString)

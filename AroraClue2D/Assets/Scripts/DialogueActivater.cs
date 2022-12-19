@@ -30,10 +30,6 @@ public class DialogueActivater : MonoBehaviour
     [Header("Should the Quest be Marked Complete after the Dialogue?")]
     public bool markComplete;
 
-    private void Start()
-    {
-        Debug.Log("dialogue activater");
-    }
 
     void Update()
     {

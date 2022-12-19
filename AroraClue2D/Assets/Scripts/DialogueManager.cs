@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,14 +20,20 @@ public class DialogueManager : MonoBehaviour
     public string[] dialogueLines;
 
     public int currentLine;
-    private bool justStarted;
+    private bool justStarted = true;
+    private bool autoplayActive = false;
 
     public static DialogueManager instance;
 
 
+    private float timer = 0;
+    private float autoplayDelay = 5; //seconds
+
     private string questToMark;
     private bool markQuestComplete;
     private bool shouldMarkQuest;
+
+    public string cutsceneEndType = "";
 
 
     void Start()
@@ -42,45 +49,93 @@ public class DialogueManager : MonoBehaviour
     {
         if (dialogueBox.activeInHierarchy)
         {
-            if (Input.GetButtonUp("Fire1"))
+            GameMenu.instance.CloseMenu();
+
+            //player progressed
+            if(!autoplayActive)
             {
-                if (!justStarted)
+                if (Input.GetButtonUp("Fire1"))
                 {
-                    currentLine++;
-                    
-
-                    if (currentLine >= dialogueLines.Length)
+                    if (!justStarted)
                     {
-                        dialogueBox.SetActive(false);
-                        GameManager.Instance.dialogueActive = false;
-
-                        if (shouldMarkQuest)
-                        {
-                            shouldMarkQuest = false;
-                            if (markQuestComplete)
-                            {
-                                QuestManager.instance.MarkQuestComplete(questToMark);
-                            }
-                            else
-                            {
-                                QuestManager.instance.MarkQuestIncomplete(questToMark);
-                            }
-                        }
+                        NextLine();
                     }
                     else
                     {
-                        CheckIfName();
-                        dialogueText.text = dialogueLines[currentLine];
+                        justStarted = false;
                     }
+
+                }
+            }
+            //autoplay cutscene
+            else
+            {
+                if (timer > autoplayDelay)
+                {
+                    NextLine();
+                    timer = 0;
+                }
+
+                timer += Time.deltaTime;
+            }
+            
+        }
+        
+    }
+
+    private void NextLine()
+    {
+        currentLine++;
+
+
+        if (currentLine >= dialogueLines.Length)
+        {
+            dialogueBox.SetActive(false);
+            GameManager.Instance.dialogueActive = false;
+
+
+            switch (cutsceneEndType)
+            {
+                case "readyToResume":
+                    GameManager.Instance.isReadyToResume = true;
+                    break;
+
+                case "readyToStartCountdown":
+                    GameManager.Instance.isReadyToStartCountdown = true;
+                    break;
+
+                case "readyToCheckAnswers":
+                    GameManager.Instance.isReadyToCheckAnswers = true;
+                    break;
+
+                case "readyToEndGame":
+                    GameManager.Instance.isReadyToEndGame = true;
+                    break;
+
+                default:
+                    break;
+
+            }
+            
+
+            if (shouldMarkQuest)
+            {
+                shouldMarkQuest = false;
+                if (markQuestComplete)
+                {
+                    QuestManager.instance.MarkQuestComplete(questToMark);
                 }
                 else
                 {
-                    justStarted = false;
+                    QuestManager.instance.MarkQuestIncomplete(questToMark);
                 }
-                
             }
         }
-        
+        else
+        {
+            CheckIfName();
+            dialogueText.text = dialogueLines[currentLine];
+        }
     }
 
     public void ShowDialogue(string[] newLines, bool isPerson)
@@ -101,6 +156,32 @@ public class DialogueManager : MonoBehaviour
         nameBox.SetActive(isPerson);
 
         GameManager.Instance.dialogueActive = true;
+
+    }
+
+    public void AutoPlayDialogue(string[] newLines, float delay_Sec, string cutsceneEndTypeString)
+    {
+
+        dialogueBox.SetActive(true);
+
+        //set the string that determines what happens after the cutscene
+        cutsceneEndType = cutsceneEndTypeString;
+
+        //plugging the array in directly to a placeholder array here allows it to be of an adaptable length and content easily
+        dialogueLines = newLines;
+        currentLine = 0;
+
+        CheckIfName();
+
+        dialogueText.text = dialogueLines[currentLine];
+
+        autoplayDelay = delay_Sec;
+        timer = 0;
+
+        nameBox.SetActive(true);
+
+        autoplayActive = true;
+        GameManager.Instance.cutsceneActive = true;
 
     }
 
