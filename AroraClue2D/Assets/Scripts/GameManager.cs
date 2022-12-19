@@ -82,6 +82,12 @@ public class GameManager : MonoBehaviour
             PlayerController.instance.canMove = true;
         }
 
+        RunGuessSystemChecksAndTimers();
+
+    }
+
+    void RunGuessSystemChecksAndTimers()
+    {
         if (isReadyToCheckAnswers)
         {
             Debug.Log("ready to check answers");
@@ -96,7 +102,7 @@ public class GameManager : MonoBehaviour
             Debug.Log("ready to end game");
             EndGame();
 
-            isReadyToEndGame= false;
+            isReadyToEndGame = false;
         }
 
         if (isReadyToResume)
@@ -104,7 +110,7 @@ public class GameManager : MonoBehaviour
             Debug.Log("ready to resume");
             ResumeGame();
 
-            isReadyToResume= false;
+            isReadyToResume = false;
         }
 
         if (isReadyToStartCountdown)
@@ -120,7 +126,7 @@ public class GameManager : MonoBehaviour
             GameMenu.instance.guessWindow.SetActive(true);
             GameMenu.instance.guessButton.SetActive(true);
 
-            isReadyToStartCountdown= false;
+            isReadyToStartCountdown = false;
         }
 
         if (timerIsRunning)
@@ -141,9 +147,6 @@ public class GameManager : MonoBehaviour
 
             TriggerCheckIfAllAnswersSubmitted();
         }
-
-
-
     }
 
     //countup to amount

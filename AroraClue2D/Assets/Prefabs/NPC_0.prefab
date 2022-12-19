@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 9153565421829084986}
   - component: {fileID: 6732661876288537158}
   - component: {fileID: 6732661876288537159}
+  - component: {fileID: 4755403141047122674}
   m_Layer: 0
   m_Name: NPC_0
   m_TagString: Untagged
@@ -151,6 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e00d25cf8941754aa3ca55bf80a88cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  randomGameElementsManager: {fileID: 2062528231954131355, guid: 14959bac892f0c649b86c543917bd662, type: 3}
   lines:
   - n-Girl
   - Hi!
@@ -159,6 +161,23 @@ MonoBehaviour:
   - Ok...
   - Bye!
   isPerson: 1
+  isInteractionPoint: 0
+  isSuspectInfo: 0
+  isWeaponInfo: 0
+  isPlaceInfo: 0
+  spawnNumber: 0
   shouldActivateAQuest: 0
   questToMark: 
   markComplete: 0
+--- !u!114 &4755403141047122674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6732661876288537154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 478a6aba0b491c84a8b0b3223ebef701, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
