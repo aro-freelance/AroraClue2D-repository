@@ -8,9 +8,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using Amazon.Runtime;
+using System.Collections;
+using UnityEngine.UI;
+using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 
- // SQS supports programmatic sending of messages via web service applications as a way to communicate over the Internet
- 
+// SQS supports programmatic sending of messages via web service applications as a way to communicate over the Internet
+
+// SQS supports programmatic sending of messages via web service applications as a way to communicate over the Internet
+
 
 public class SQSMessageProcessing : MonoBehaviour
 {
@@ -20,12 +26,15 @@ public class SQSMessageProcessing : MonoBehaviour
     private string SQSURL;
 
 
-    private const int MaxMessages = 1;
-    private const int WaitTime = 20;
-
+    private const int MaxMessages = 100; //1
+    private const int WaitTime = 200; //20
+     
     private AmazonSQSClient _sqsClient;
     private Coroutine _fulfillmentFailsafeCoroutine;
     private bool _fulfillmentMessageReceived = false;
+
+
+    
 
     void Start()
     {
@@ -33,13 +42,21 @@ public class SQSMessageProcessing : MonoBehaviour
         IdentityPool = PrivateConsts.instance.IdentityPool;
         SQSURL = PrivateConsts.instance.SQSURL;
 
+
+
         CognitoAWSCredentials credentials = new CognitoAWSCredentials(
             IdentityPool, // Your Identity pool ID
             RegionEndpoint.USEast1 // Your GameLift Region
         );
 
-        _sqsClient = new AmazonSQSClient(credentials, Amazon.RegionEndpoint.USEast1);
+
+        _sqsClient = new AmazonSQSClient(credentials, RegionEndpoint.USEast1);
+
+        
     }
+
+
+
 
     public async Task<PlayerPlacementFulfillmentInfo> SubscribeToFulfillmentNotifications(string placementId)
     {
@@ -50,7 +67,24 @@ public class SQSMessageProcessing : MonoBehaviour
 
         do
         {
-            var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
+            //Debug.Log("client : " + _sqsClient);
+            //Debug.Log("sqsurl : " + SQSURL);
+
+            //var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
+
+            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest
+            {
+                QueueUrl = SQSURL,
+                MaxNumberOfMessages = MaxMessages,
+                WaitTimeSeconds = WaitTime
+            };
+
+            Debug.Log("ping");
+
+            ReceiveMessageResponse msg = await _sqsClient.ReceiveMessageAsync(receiveMessageRequest); //error here
+
+            Debug.Log("msg count " + msg.Messages.Count);
+
             if (msg.Messages.Count != 0)
             {
                 Debug.Log("SubscribeToFulfillmentNotifications received message...");
@@ -75,6 +109,12 @@ public class SQSMessageProcessing : MonoBehaviour
 
                 // we don't break loop here because the message received wasn't for this player
             }
+            else
+            {
+                _fulfillmentMessageReceived = true;
+                Debug.Log("no messages");
+            }
+
         } while (!_fulfillmentMessageReceived);
 
         return playerPlacementFulfillmentInfo;
@@ -149,12 +189,22 @@ public class SQSMessageProcessing : MonoBehaviour
     // Method to read a message from the given queue
     private static async Task<ReceiveMessageResponse> GetMessage(IAmazonSQS sqsClient, string qUrl, int waitTime = 0)
     {
-        return await sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
-        {
+
+        //hard set url here for testing?
+
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest
+        { 
             QueueUrl = qUrl,
             MaxNumberOfMessages = MaxMessages,
             WaitTimeSeconds = waitTime
-        });
+        };
+
+        Debug.Log("qurl = " + qUrl);
+
+        Debug.Log("receivemessagerequest = " + receiveMessageRequest);
+
+
+        return await sqsClient.ReceiveMessageAsync(receiveMessageRequest);
     }
 
     private static string CleanupMessage(string messageToClean)

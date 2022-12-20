@@ -1,15 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿
 using UnityEngine;
 using TMPro;
-using Unity.VisualScripting;
 using System.Net;
 using Newtonsoft.Json;
 using System;
 using Aws.GameLift.Realtime.Types;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using static Google.Protobuf.WellKnownTypes.Field.Types;
+using Aws;
+using Amazon;
+using Aws.GameLift.Realtime.Network;
+using AWSSDK;
+using ThirdParty.Json.LitJson;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -30,6 +33,9 @@ public class GameManager : MonoBehaviour
     public GameObject leadDetective;
     public GameObject timerObjectOutOfMenu;
     public GameObject timerObjectInMenu;
+
+
+
 
     public int currentMoney;
 
@@ -93,11 +99,17 @@ public class GameManager : MonoBehaviour
     //these are being used
     public const int CHECK_ANSWERS = 305;
     public const int PLAYER_MOVEMENT = 900;
+    public const int PLAYER_MOVEMENT_RECEIVED = 901;
     public const int GAME_START_OP = 201;
     public const int GAMEOVER_OP = 209;
 
     // Lambda opcodes
     private const string REQUEST_FIND_MATCH_OP = "1";
+
+
+    private float lastSentX;
+    private float lastSentY;
+    private float lastSentZ;
 
 
 
@@ -149,7 +161,7 @@ public class GameManager : MonoBehaviour
 
     }
 
-    void ServerProcesses()
+    async void ServerProcesses()
     {
         if (_findingMatch)
         {
@@ -173,19 +185,43 @@ public class GameManager : MonoBehaviour
         {
             _movement = false;
 
-            if(_realTimeClient != null)
+            
+
+            if (_apiManager != null)
             {
+                float x = PlayerController.instance.transform.position.x;
+                float y = PlayerController.instance.transform.position.y;
+                float z = PlayerController.instance.transform.position.z;
+
+                //send to server if requirements met
+
+                if (lastSentX == null && lastSentY == null && lastSentZ == lastSentZ == null)
+                {
+                    SendMovement(x, y, z);
+                }
+                else if (Math.Abs(lastSentX - x) > 1)
+                {
+                    SendMovement(x, y, z);
+
+                }
+                else if (Math.Abs(lastSentY - y) > 1)
+                {
+                    SendMovement(x, y, z);
+
+                }
+
+
                 //if there is movement, send it to the server with the code to tell it that is the movement of the player with playerId
                 //then we can use that one each instance of the game to set the sprite for that playerId
-                RealtimePayload movement = new RealtimePayload(_playerId,
-                    PlayerController.instance.transform.position.x,
-                    PlayerController.instance.transform.position.y,
-                    PlayerController.instance.transform.position.z);
-                _realTimeClient.SendMessage(PLAYER_MOVEMENT, movement);
+                //RealtimePayload movement = new RealtimePayload(_playerId,
+                //    PlayerController.instance.transform.position.x,
+                //    PlayerController.instance.transform.position.y,
+                //    PlayerController.instance.transform.position.z);
+                //_realTimeClient.SendMessage(PLAYER_MOVEMENT, movement);
             }
             else
             {
-                Debug.Log("movement, realtimeclient is null");
+                Debug.Log("movement, api is null");
             }
         }
 
@@ -193,7 +229,7 @@ public class GameManager : MonoBehaviour
         {
             _checkAnswers = false;
 
-            if (_realTimeClient != null)
+            if (_apiManager != null)
             {
                 Debug.Log("checkanswers bool");
                 //if there is a guess, send it to the server with the code to check it locally
@@ -206,7 +242,7 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("movement, realtimeclient is null");
+                Debug.Log("movement, api is null");
             }
 
         }
@@ -230,6 +266,23 @@ public class GameManager : MonoBehaviour
             this._gameOver = false;
             DisplayMatchResults();
         }
+    }
+
+    async void SendMovement(float x, float y, float z)
+    {
+
+        Debug.Log("pos : " + x + "," + y + "," + z);
+
+        PlayerMovementData playerMovementData = new PlayerMovementData("900", x, y, z, _playerId);
+
+        string jsonData = JsonUtility.ToJson(playerMovementData);
+
+        lastSentX = x;
+        lastSentY = y;
+        lastSentZ = z;
+
+        await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+
     }
 
     void RunGuessSystemChecksAndTimers()
@@ -757,6 +810,8 @@ public class GameManager : MonoBehaviour
 
                 Int32.TryParse(gameSessionPlacementInfo.Port, out int portAsInt);
 
+                
+
                 // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
                 // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
                 EstablishConnectionToRealtimeServer(gameSessionPlacementInfo.IpAddress, portAsInt, gameSessionPlacementInfo.PlayerSessionId);
@@ -809,23 +864,16 @@ public class GameManager : MonoBehaviour
         if (_realTimeClient != null)
         {
 
-            if (_realTimeClient.Client.ConnectedAndReady)
-            {
-                Debug.Log("realtimeclient: not null");
+            _realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
+            _realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
 
+            //TODO: add startgame handler
 
-                _realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
-                _realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
+            _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
+            _realTimeClient.GameOverEventHandler += OnGameOverEvent;
 
-                //TODO: add startgame handler
+            Debug.Log("realtimeclient: " + _realTimeClient);
 
-                _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
-                _realTimeClient.GameOverEventHandler += OnGameOverEvent;
-            }
-            else
-            {
-                Debug.Log("client not connected and ready");
-            }
 
 
         }
@@ -1086,11 +1134,24 @@ public class MatchResults
 
 public class PlayerMovementData
 {
-
+    public string opCode;
     public float playerXPosition;
     public float playerYPosition;
     public float playerZPosition;
     public string playerId;
+   
+
+    public PlayerMovementData() { }
+
+    public PlayerMovementData(string opCode, float playerXPosition, float playerYPosition, float playerZPosition, string playerId)
+    {
+        this.opCode = opCode;
+        this.playerXPosition = playerXPosition;
+        this.playerYPosition = playerYPosition;
+        this.playerZPosition = playerZPosition;
+        this.playerId = playerId;
+
+    }
 
 }
 
@@ -1102,6 +1163,19 @@ public class PlayerGuessData
     public string location;
     public bool guessedOnTime;
     public string playerId;
+
+    public PlayerGuessData() { }
+    
+    public PlayerGuessData(string weapon, string suspect, string location, bool guessedOnTime, string playerId)
+    {
+        this.weapon = weapon;
+        this.suspect = suspect;
+        this.location = location;
+        this.guessedOnTime= guessedOnTime;
+        this.playerId = playerId;
+
+    }
+
 }
 
 

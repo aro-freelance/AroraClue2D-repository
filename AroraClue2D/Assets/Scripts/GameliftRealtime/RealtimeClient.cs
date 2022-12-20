@@ -222,9 +222,9 @@ public class RealTimeClient
                 break;
 
 
-            case GameManager.PLAYER_MOVEMENT:
+            case GameManager.PLAYER_MOVEMENT_RECEIVED:
 
-                Debug.Log("player movement switch");
+                Debug.Log("realtimeclient: player movement received in switch");
                 PlayerMovementData playerMovementData = JsonConvert.DeserializeObject<PlayerMovementData>(dataString);
 
                 OnPlayerMovement(playerMovementData);

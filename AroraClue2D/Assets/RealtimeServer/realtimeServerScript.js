@@ -1,18 +1,18 @@
 ﻿// Based on source: https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script.html
 
+//ARORA 0.0.5
 
-//this handles player interactions on the server. for a simple project, one file is fine.  
-//for a more complex preoject: "consider breaking this out in to a node project and keeping this script with all the callbacks separate from your core game logic
-
-
+//this handles player interactions on the server.  
 
 // Example Realtime Server Script
 'use strict';
+
 
 // Example override configuration
 const configuration = {
     pingIntervalTime: 30000
 };
+
 
 // Timing mechanism used to trigger end of game session. Defines how long, in milliseconds, between each tick in the example tick loop
 const tickTime = 1000;
@@ -31,15 +31,40 @@ var onProcessStartedCalled = false; // Record if onProcessStarted has been calle
 const OP_CODE_PLAYER_ACCEPTED = 113;
 const OP_CODE_DISCONNECT_NOTIFICATION = 114;
 
-// @BatteryAcid
+
+
 const GAME_START_OP = 201;
 const GAMEOVER_OP = 209;
-const PLAY_CARD_OP = 300;
-const DRAW_CARD_ACK_OP = 301;
+const START_TIMER_OP = 301;
+const START_GUESS_EVENT_COUNTDOWN = 302;
+
+//these are being used
+const CHECK_ANSWERS = 305;
+const PLAYER_MOVEMENT = 900;
+const PLAYER_MOVEMENT_RECEIVED = 901;
+
+
 
 let playersInfo = [];
+
+let serverConnected = false;
+
+let timeForStart = false;
+let timeForGuessEvent = false;
+let timeForResume = false;
+
+let weapon = null;
+let suspect = null;
+let location = null;
+let guessedOnTime = null;
+
+let hintWeapon = null;
+let hintSuspect = null;
+let hintLocation = null;
+
+
+let host = null;
 let winner = null;
-let cardPlays = {};
 let gameover = false;
 
 // Called when game server is initialized, passed server's object of current session
@@ -47,6 +72,9 @@ function init(rtSession) {
     session = rtSession;
     logger = session.getLogger();
     logger.info("init");
+
+    console.log("hello world. this is the realtimeserverscript");
+
 }
 
 // On Process Started is called when the process has begun and we need to perform any
@@ -132,6 +160,12 @@ function onPlayerAccepted(player) {
     // This player was accepted -- let's send them a message
     const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, player.peerId, "Peer " + player.peerId + " accepted");
     session.sendReliableMessage(msg, player.peerId);
+
+    //make the first player the host
+    if (host == null) {
+        host = player.peerId;
+    }
+
     activePlayers++;
 
     logger.info("onPlayerAccepted checking active player count");
@@ -139,7 +173,10 @@ function onPlayerAccepted(player) {
     // This would have to adjusted to handle games where players can come and go within a single match.
     // NOTE: ActivePlayers stores active connections. If you need to test from only one computer, like you
     // can only play one side of the match at a time, then you'll have to make this condition check if playerInfo.length > 1 instead.
+    //TODO: i changed this to >= from > for testing...
     if (activePlayers > 1) {
+
+        serverConnected = true;
 
         logger.info("onPlayerAccepted activePlayers > 1");
 
@@ -175,7 +212,6 @@ function onPlayerAccepted(player) {
 
 }
 
-// @BatteryAcid note: I don't actually do anything with this message, but you can add that support to your Unity client.
 // On Player Disconnect is called when a player has left or been forcibly terminated
 // Is only called for players that actually connected to the server and not those rejected by validation
 // This is called before the player is removed from the player list
@@ -198,7 +234,7 @@ function onPlayerDisconnect(peerId) {
     });
 }
 
-// @BatteryAcid
+
 // Handle a message to the server
 function onMessage(gameMessage) {
     logger.info("onMessage");
@@ -207,10 +243,45 @@ function onMessage(gameMessage) {
     // pass data through the payload field
     var payloadRaw = new Buffer.from(gameMessage.payload);
     var payload = JSON.parse(payloadRaw);
+    logger.info("payload")
     logger.info(payload);
     logger.info(payload.playerId);
 
     switch (gameMessage.opCode) {
+        case PLAYER_MOVEMENT:
+            {
+                //process data
+                let allPlayersLength = playersInfo.length;
+
+                let movementData = {
+                    playerXPosition: payload.playerXPosition,
+                    playerYPosition: payload.playerYPosition,
+                    playerZPosition: payload.playerZPosition,
+                    playerId: payload.playerId
+                };
+
+                logger.info("movement data")
+                logger.info(movementData);
+
+                //make message
+                const movementMSG = session.newTextGameMessage(
+                    PLAYER_MOVEMENT_RECEIVED, session.getServerId(), JSON.stringify(movementData));
+
+                //send message
+                for (let index = 0; index < allPlayersLength; ++index) {
+                    logger.info("Sending draw card message to player " + playersInfo[index].peerId);
+                    session.sendReliableMessage(cardDrawMsg, playersInfo[index].peerId);
+                }
+
+                //checkstate after any changes
+                //TODO: do stuff here if needed after movement
+
+                break;
+            }
+
+            //TODO: add move cases... for each call to server to handle
+
+
         case PLAY_CARD_OP:
             {
                 logger.info("PLAY_CARD_OP hit");
@@ -219,6 +290,7 @@ function onMessage(gameMessage) {
                 var cardDrawnSuccess = addCardDraw(cardDrawn, payload.playerId);
 
                 if (cardDrawnSuccess) {
+
 
                     let allPlayersLength = playersInfo.length;
                     let cardDrawData = {
@@ -349,9 +421,18 @@ async function tickLoop() {
             logger.info("All players disconnected. Ending game");
 
             gameoverCleanup();
-        } else {
+        }
+        else if(serverConnected && activePlayers == 0) {
+            logger.info("All players disconnected. Ending game");
+
+            gameoverCleanup();
+        }
+        else {
             setTimeout(tickLoop, tickTime);
         }
+
+        
+
     } else {
         logger.info("game over");
         gameoverCleanup();
