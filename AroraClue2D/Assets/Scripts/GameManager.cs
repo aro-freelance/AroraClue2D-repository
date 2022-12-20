@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 using System;
 using Aws.GameLift.Realtime.Types;
 using System.Net.Sockets;
+using System.Threading.Tasks;
+using static Google.Protobuf.WellKnownTypes.Field.Types;
 
 public class GameManager : MonoBehaviour
 {
@@ -76,11 +78,21 @@ public class GameManager : MonoBehaviour
     private bool _updateRemotePlayerId = false;
     private bool _findingMatch = false;
     private bool _gameOver = false;
+    private bool _checkAnswers = false;
+    private bool _startGame = false;
+    public bool _movement = false;
 
 
     // GameLift server opcodes 
     // An opcode defined by client and your server script that represents a custom message type
+    //TODO: these are not being used at the moment. remove?
     public const int OP_CODE_PLAYER_ACCEPTED = 113;
+    public const int START_TIMER_OP = 301;
+    public const int START_GUESS_EVENT_COUNTDOWN = 302;
+
+    //these are being used
+    public const int CHECK_ANSWERS = 305;
+    public const int PLAYER_MOVEMENT = 900;
     public const int GAME_START_OP = 201;
     public const int GAMEOVER_OP = 209;
 
@@ -97,6 +109,7 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         GameSessionPlacementEndpoint = PrivateConsts.instance.GameSessionPlacementEndpoint;
+
         _apiManager = FindObjectOfType<APIManager>();
         _sqsMessageProcessing = FindObjectOfType<SQSMessageProcessing>();
 
@@ -105,9 +118,6 @@ public class GameManager : MonoBehaviour
 
 
         _playerId = System.Guid.NewGuid().ToString();
-
-        BuildUI();
-
 
 
 
@@ -150,23 +160,69 @@ public class GameManager : MonoBehaviour
 
         if (_realTimeClient != null && _realTimeClient.GameStarted)
         {
-            //_playCardButton.gameObject.SetActive(true);
             _realTimeClient.GameStarted = false;
         }
 
         if (_updateRemotePlayerId)
         {
             _updateRemotePlayerId = false;
-            //remoteClientPlayerName.text = _remotePlayerId;
+            //update UI?
         }
 
-        // Card plays - there's a better way to do this...
-        if (_processGuess)
+        if (_movement)
         {
-            _processGuess = false;
+            _movement = false;
 
-            ProcessCardPlay();
+            if(_realTimeClient != null)
+            {
+                //if there is movement, send it to the server with the code to tell it that is the movement of the player with playerId
+                //then we can use that one each instance of the game to set the sprite for that playerId
+                RealtimePayload movement = new RealtimePayload(_playerId,
+                    PlayerController.instance.transform.position.x,
+                    PlayerController.instance.transform.position.y,
+                    PlayerController.instance.transform.position.z);
+                _realTimeClient.SendMessage(PLAYER_MOVEMENT, movement);
+            }
+            else
+            {
+                Debug.Log("movement, realtimeclient is null");
+            }
         }
+
+        if (_checkAnswers)
+        {
+            _checkAnswers = false;
+
+            if (_realTimeClient != null)
+            {
+                Debug.Log("checkanswers bool");
+                //if there is a guess, send it to the server with the code to check it locally
+                //TODO: get the actual guesses and replace the hard coded strings
+                RealtimePayload guess = new RealtimePayload(_playerId,
+                    "weaponguess",
+                    "suspectguess",
+                    "locationguess");
+                _realTimeClient.SendMessage(PLAYER_MOVEMENT, guess);
+            }
+            else
+            {
+                Debug.Log("movement, realtimeclient is null");
+            }
+
+        }
+
+        if (_startGame)
+        {
+            _startGame = false;
+
+            Debug.Log("start game bool call in GameManager");
+
+            //TODO: implement
+            //find the player list, assign sprites to the players, choose a host,
+            //host should roll the random stuff start the timer
+
+        }
+
 
         // determine match results once game is over
         if (this._gameOver == true)
@@ -641,6 +697,27 @@ public class GameManager : MonoBehaviour
     /// </summary>
 
 
+    /// <summary>
+    /// 
+    /// When finding a match we first are building a call to the server with apimanager.Post(api, postdata)
+    /// 
+    /// Then we are getting the server response back in the string called response. 
+    /// This response is then converted from JSON to GameSessionPlacementEndpoint (defined in SQSMessageProcessing)
+    /// which we can then use to access the string values such as PlacementId and GameSessionId
+    /// we can then used these strings to make a GameSession and establish a connection 
+    /// using SubscribeToFullfillmentNotifications and EstablishConnectionToRealtimeServer
+    /// 
+    /// Once we establish a connection we will have a realTimeClient which we can use to access the handlers setup there.
+    /// 
+    /// Once we have a realtimeclient and handlers:
+    /// the realtimeclient can be sent codes along with playerids to tell it to call a method.
+    /// 
+    /// When a code is received it is processed by RealtimeClient > OnDataReceived using a switch run by the code int
+    /// This switch tells it which method to use.
+    /// 
+    /// Then we send the data to that function to process using a handler.
+    /// 
+    /// </summary>
     public async void OnFindMatchPressed()
     {
         Debug.Log("Find match pressed");
@@ -648,21 +725,18 @@ public class GameManager : MonoBehaviour
 
         FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId);
         string jsonPostData = JsonUtility.ToJson(matchMessage);
-        // Debug.Log(jsonPostData);
-
-        //localClientPlayerName.text = _playerId;
-        //Debug.Log("local client player name" + _playerId);
 
 
         string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
+
         Debug.Log("response: " + response);
 
         GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
 
-        Debug.Log(gameSessionPlacementInfo);
-
         if (gameSessionPlacementInfo != null)
         {
+
+
             // GameSessionPlacementInfo is a model used to handle both game session placement and game session search results from the Lambda response.
             if (gameSessionPlacementInfo.PlacementId != null)
             {
@@ -692,10 +766,36 @@ public class GameManager : MonoBehaviour
                 Debug.Log("Game session response not valid...");
             }
         }
+        else
+        {
+            Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
+        }
 
         //_findMatchButton.gameObject.SetActive(false); // remove from UI
     }
 
+    private async Task<bool> SubscribeToFulfillmentNotifications(string placementId)
+    {
+        PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(placementId);
+
+        if (playerPlacementFulfillmentInfo != null)
+        {
+            Debug.Log("Player placement was fulfilled...");
+            // Debug.Log("Placed Player Sessions count: " + playerPlacementFulfillmentInfo.placedPlayerSessions.Count);
+
+            // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
+            // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
+            EstablishConnectionToRealtimeServer(playerPlacementFulfillmentInfo.ipAddress, playerPlacementFulfillmentInfo.port,
+                playerPlacementFulfillmentInfo.placedPlayerSessions[0].playerSessionId);
+
+            return true;
+        }
+        else
+        {
+            Debug.Log("Player placement was null, something went wrong...");
+            return false;
+        }
+    }
 
     private void EstablishConnectionToRealtimeServer(string ipAddress, int port, string playerSessionId)
     {
@@ -705,35 +805,85 @@ public class GameManager : MonoBehaviour
         string payload = JsonUtility.ToJson(realtimePayload);
 
         _realTimeClient = new RealTimeClient(ipAddress, port, localUdpPort, playerSessionId, payload, ConnectionType.RT_OVER_WS_UDP_UNSECURED);
-        _realTimeClient.CardPlayedEventHandler += OnCardPlayedEvent;
-        _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
-        _realTimeClient.GameOverEventHandler += OnGameOverEvent;
-    }
 
-
-    void OnCardPlayedEvent(object sender, CardPlayedEventArgs cardPlayedEventArgs)
-    {
-        Debug.Log($"The card {cardPlayedEventArgs.card} was played by {cardPlayedEventArgs.playedBy}, and had {cardPlayedEventArgs.plays} plays.");
-        CardPlayed(cardPlayedEventArgs);
-    }
-
-    private void CardPlayed(CardPlayedEventArgs cardPlayedEventArgs)
-    {
-        Debug.Log($"card played {cardPlayedEventArgs.card}");
-
-        if (cardPlayedEventArgs.playedBy == _playerId)
+        if (_realTimeClient != null)
         {
-            Debug.Log("local card played");
-            _matchStats.localPlayerCardsPlayed.Add(cardPlayedEventArgs.card.ToString());
+
+            if (_realTimeClient.Client.ConnectedAndReady)
+            {
+                Debug.Log("realtimeclient: not null");
+
+
+                _realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
+                _realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
+
+                //TODO: add startgame handler
+
+                _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
+                _realTimeClient.GameOverEventHandler += OnGameOverEvent;
+            }
+            else
+            {
+                Debug.Log("client not connected and ready");
+            }
+
 
         }
         else
         {
-            Debug.Log("remote card played");
-            _matchStats.remotePlayerCardsPlayed.Add(cardPlayedEventArgs.card.ToString());
+            Debug.Log("realtimeclient: null");
         }
 
-        _processCardPlay = true;
+    }
+
+    void OnPlayerMovementEvent(object sender, PlayerMovementArgs playerMovementArgs)
+    {
+        UpdatePlayerMovement(playerMovementArgs);
+
+
+    }
+
+    private void UpdatePlayerMovement(PlayerMovementArgs playerMovementArgs)
+    {
+        //TODO: for the player sprite for the playerid received update their location to the one received?
+
+        if(playerMovementArgs != null)
+        {
+            Debug.Log("Gamemanager. Update player movement: id = " + playerMovementArgs.playerId
+            + " x: " + playerMovementArgs.playerXLocation + " y: " + playerMovementArgs.playerYLocation
+            + " z: " + playerMovementArgs.playerZLocation);
+
+        }
+        else
+        {
+            Debug.Log("Gamemanager. playermovementargs null");
+        }
+
+    }
+
+    void OnCheckAnswersEvent(object sender, CheckAnswersArgs checkAnswersArgs)
+    {
+
+        UpdateCheckAnswers(checkAnswersArgs);
+
+    }
+
+    private void UpdateCheckAnswers(CheckAnswersArgs checkAnswersArgs)
+    {
+        //TODO: check the answers against the ones that were chosen on game start
+
+
+        if (checkAnswersArgs != null)
+        {
+            Debug.Log("Gamemanager. checkanswers weapon " + checkAnswersArgs.currentAnswerWeapon);
+
+        }
+        else
+        {
+            Debug.Log("Gamemanager. playermovementargs null");
+        }
+
+
     }
 
 
@@ -757,19 +907,6 @@ public class GameManager : MonoBehaviour
     }
 
 
-    private void ProcessCardPlay()
-    {
-        //for (int cardIndex = 0; cardIndex < _matchStats.localPlayerCardsPlayed.Count; cardIndex++)
-        //{
-        //    cardUIObjects[cardIndex].text = _matchStats.localPlayerCardsPlayed[cardIndex];
-        //}
-
-        //for (int cardIndex = 0; cardIndex < _matchStats.remotePlayerCardsPlayed.Count; cardIndex++)
-        //{
-        //    // Added + 2 because cardUIObjects holds all UI cards, first 2 are local, last 2 are remote 
-        //    cardUIObjects[cardIndex + 2].text = _matchStats.remotePlayerCardsPlayed[cardIndex];
-        //}
-    }
 
     private void DisplayMatchResults()
     {
@@ -803,29 +940,6 @@ public class GameManager : MonoBehaviour
         //Player1Result.text = localPlayerResults;
         //Player2Result.text = remotePlayerResults;
         Debug.Log("player1result: " + localPlayerResults + ". player2result: " + remotePlayerResults);
-    }
-
-    private void BuildCardsIntoUI()
-    {
-        //// build cards into UI from prefab
-        //GameObject canvas = GameObject.Find("PlayPanel");
-        //foreach (Vector3 cardLocation in cardLocationsInUI)
-        //{
-        //    GameObject card = Instantiate(CardPrefab, cardLocation, Quaternion.identity, canvas.transform);
-        //    cardUIObjects.Add(card.GetComponentInChildren<TMPro.TextMeshProUGUI>());
-        //}
-
-        //CardPrefab.gameObject.SetActive(false); // turn off source prefab 
-    }
-
-    public void OnPlayCardPressed()
-    {
-        //Debug.Log("Play card pressed");
-
-        //RealtimePayload realtimePayload = new RealtimePayload(_playerId);
-
-        //// Use the Realtime client's SendMessage function to pass data to the server
-        //_realTimeClient.SendMessage(PLAY_CARD_OP, realtimePayload);
     }
 
 
@@ -863,8 +977,10 @@ public class GameManager : MonoBehaviour
 
 public class MatchStats
 {
-    public List<string> localPlayerCardsPlayed = new List<string>();
-    public List<string> remotePlayerCardsPlayed = new List<string>();
+    //convert this to strings/ dictionaries? of the data the players have found?
+
+    //public List<string> localPlayerCardsPlayed = new List<string>();
+    //public List<string> remotePlayerCardsPlayed = new List<string>();
 }
 
 [System.Serializable]
@@ -906,29 +1022,44 @@ public class StartMatch
 public class RealtimePayload
 {
     public string playerId;
+
+
     // Other fields you wish to pass as payload to the realtime server
+
+    public float playerXLocation;
+    public float playerYLocation;
+    public float playerZLocation;
+
+    public string weaponGuess;
+    public string suspectGuess;
+    public string locationGuess;
+
     public RealtimePayload() { }
     public RealtimePayload(string playerIdIn)
     {
         this.playerId = playerIdIn;
     }
-}
 
-[System.Serializable]
-public class CardPlayed
-{
-    public int card;
-    public string playedBy;
-    public int plays;
-
-    public CardPlayed() { }
-    public CardPlayed(int cardIn, string playedByIn, int playsIn)
+    public RealtimePayload(string playerId, float playerXLocation, float playerYLocation, float playerZLocation)
     {
-        this.card = cardIn;
-        this.playedBy = playedByIn;
-        this.plays = playsIn;
+        this.playerId = playerId;
+        this.playerXLocation = playerXLocation;
+        this.playerYLocation = playerYLocation;
+        this.playerZLocation = playerZLocation;
     }
+
+    public RealtimePayload(string playerId, string weaponGuess, string suspectGuess, string locationGuess)
+    {
+        this.playerId = playerId;
+        this.weaponGuess = weaponGuess;
+        this.suspectGuess = suspectGuess;
+        this.locationGuess = locationGuess;
+
+    }
+
 }
+
+
 
 [System.Serializable]
 public class MatchResults
@@ -950,6 +1081,27 @@ public class MatchResults
         this.playerTwoScore = playerTwoScoreIn;
         this.winnerId = winnerIdIn;
     }
+}
+
+
+public class PlayerMovementData
+{
+
+    public float playerXPosition;
+    public float playerYPosition;
+    public float playerZPosition;
+    public string playerId;
+
+}
+
+public class PlayerGuessData
+{
+
+    public string weapon;
+    public string suspect;
+    public string location;
+    public bool guessedOnTime;
+    public string playerId;
 }
 
 

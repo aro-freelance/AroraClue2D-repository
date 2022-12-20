@@ -5,6 +5,12 @@ using Aws.GameLift.Realtime;
 using Aws.GameLift.Realtime.Event;
 using Aws.GameLift.Realtime.Types;
 using Newtonsoft.Json;
+using Unity.VisualScripting;
+using Unity.VisualScripting.Antlr3.Runtime;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Collections;
+using Aws.GameLift.Realtime.Network;
 
 /**
  * @BatteryAcid
@@ -29,11 +35,27 @@ public class RealTimeClient
     public bool OnCloseReceived { get; private set; }
     public bool GameStarted = false;
 
-    public event EventHandler<CardPlayedEventArgs> CardPlayedEventHandler;
+
+    //need handlers for each event handled by server
+    //players connected?
     public event EventHandler<RemotePlayerIdEventArgs> RemotePlayerIdEventHandler;
+    //gameover
     public event EventHandler<GameOverEventArgs> GameOverEventHandler;
 
-    //public event EventHandler<CLASS> name;
+    ////start timer guess event
+    //public event EventHandler<StartTimerGuessEventArgs> StartTimerGuessEventHandler;
+    ////start countdown for submition
+    //public event EventHandler<StartGuessCountdownArgs> StartGuessCountdownEventHandler;
+
+    //StartGame handler needs to be added... it should find the player list, assign sprites to the players, choose a host,
+    //host should roll the random stuff start the timer
+
+    //check answers
+    public event EventHandler<CheckAnswersArgs> CheckAnswersEventHandler;
+    //player movement/location
+    public event EventHandler<PlayerMovementArgs> PlayerMovementEventHandler;
+
+
 
     /// <summary>
     /// Initialize a client for GameLift Realtime and connects to a player session.
@@ -56,30 +78,62 @@ public class RealTimeClient
             ConnectionType = connectionType
         };
 
-        // Create a Realtime client with the client configuration            
-        Client = new Client(clientConfiguration);
+
+        //ConnectionToken token = new ConnectionToken(tokenUID, null);
+
 
         Client = new Aws.GameLift.Realtime.Client(clientConfiguration);
+
+
+        // Create a Realtime client with the client configuration            
+       // Client = new Client(clientConfiguration);
+       // Client = new Aws.GameLift.Realtime.Client(clientConfiguration);
+
+
         Client.ConnectionOpen += new EventHandler(OnOpenEvent);
         Client.ConnectionClose += new EventHandler(OnCloseEvent);
-        Client.GroupMembershipUpdated += new EventHandler<GroupMembershipEventArgs>(OnGroupMembershipUpdate);
+        //Client.GroupMembershipUpdated += new EventHandler<GroupMembershipEventArgs>(OnGroupMembershipUpdate);
         Client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
+        Client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
 
-        ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(connectionPayload));
+        ConnectionToken token = new ConnectionToken(playerSessionId, null); //StringToBytes(connectionPayload));
         Client.Connect(endpoint, tcpPort, localUdpPort, token);
+
+
     }
 
+   
+
+
+    private void OnConnectionErrorEvent(object sender, Aws.GameLift.Realtime.Event.ErrorEventArgs e)
+    {
+        if (Client.ConnectedAndReady)
+        {
+            if (e.Exception != null)
+            {
+                Debug.Log($"[client] Connection Error! : " + e.Exception);
+                //GameManager.QuitToMainMenu();
+            }
+        }
+        
+    }
+
+
     /// <summary>
-    /// Handle data received from the Realtime server 
+    /// Handle data received from the Realtime server  This is on DataRecieved... testing OnMessageRecieved here
     /// </summary>
-    public virtual void OnDataReceived(object sender, DataReceivedEventArgs e)
+    private void OnDataReceived(object sender, DataReceivedEventArgs data)
     {
         Debug.Log("On data received");
+        string dataString = BytesToString(data.Data);
 
         // handle message based on OpCode
-        switch (e.OpCode)
+        switch (data.OpCode)
         {
-            case ServerManager.OP_CODE_PLAYER_ACCEPTED:
+            case GameManager.OP_CODE_PLAYER_ACCEPTED:
+
+                //TODO: this is not in use. remove?
+
                 // This tells our client that the player has been accepted into the Game Session as a new player session.
                 Debug.Log("Player accepted into game session!");
 
@@ -90,11 +144,11 @@ public class RealTimeClient
 
                 break;
 
-            case ServerManager.GAME_START_OP:
+            case GameManager.GAME_START_OP:
                 // The game start op tells our game clients that all players have joined and the game should start
                 Debug.Log("Start game op received...");
 
-                string startGameData = BytesToString(e.Data);
+                string startGameData = BytesToString(data.Data);
                 // Debug.Log(startGameData);
 
                 // Sets the opponent's id, in production should use their public username, not id.
@@ -107,6 +161,9 @@ public class RealTimeClient
                 break;
 
             //case GameManager.DRAW_CARD_ACK_OP:
+
+            //TODO: this is not in use. remove?
+
             //    // A player has drawn a card.  To be received as an acknowledgement that a card was played,
             //    // regardless of who played it, and update the UI accordingly.
             //    Debug.Log("Player draw card ack...");
@@ -122,11 +179,11 @@ public class RealTimeClient
 
             //    break;
 
-            case ServerManager.GAMEOVER_OP:
+            case GameManager.GAMEOVER_OP:
                 // gives us the match results
                 Debug.Log("Game over op...");
                 
-                string gameoverData = BytesToString(e.Data);
+                string gameoverData = BytesToString(data.Data);
                 // Debug.Log(gameoverData);
 
                 MatchResults matchResults = JsonConvert.DeserializeObject<MatchResults>(gameoverData);
@@ -135,24 +192,83 @@ public class RealTimeClient
 
                 break;
 
+
+            case GameManager.START_TIMER_OP:
+
+                Debug.Log("Start timer op");
+
+                
+                //TODO: this is not in use. remove?
+
+                break;
+
+
+            case GameManager.START_GUESS_EVENT_COUNTDOWN:
+
+                Debug.Log("Start countdown op");
+
+                //TODO: this is not in use. remove?
+
+                break;
+
+            case GameManager.CHECK_ANSWERS:
+
+                Debug.Log("Check answers op");
+
+                PlayerGuessData playerGuessData = JsonConvert.DeserializeObject<PlayerGuessData>(dataString);
+
+                OnPlayerGuess(playerGuessData);
+
+                break;
+
+
+            case GameManager.PLAYER_MOVEMENT:
+
+                Debug.Log("player movement switch");
+                PlayerMovementData playerMovementData = JsonConvert.DeserializeObject<PlayerMovementData>(dataString);
+
+                OnPlayerMovement(playerMovementData);
+
+                break;
+
+
+
+
+
+
+
+
             default:
-                Debug.Log("OpCode not found: " + e.OpCode);
+                Debug.Log("OpCode not found: " + data.OpCode);
                 break;
         }
     }
 
-    protected virtual void OnCardPlayed(CardPlayed cardPlayed)
-    {
-        Debug.Log("OnCardPlayed");
+    /// <summary>
+    /// 
+    /// 
+    /// Once we have a connection to the server we are initializing the handlers declared at the top of this file. 
+    /// (in the manager in EstablishConnectionToRealtimeServer).  e.x. CardPlayedEventHandler
+    /// 
+    /// We are making a new local handler which we are setting equal to the handler on the server,
+    /// If that handler exists, then we are passing the data to it. 
+    /// (data received from 
+    /// 
+    /// 
+    /// </summary>
 
-        //CardPlayedEventArgs cardPlayedEventArgs = new CardPlayedEventArgs(cardPlayed);
+    //protected virtual void OnCardPlayed(CardPlayed cardPlayed)
+    //{
+    //    Debug.Log("OnCardPlayed");
 
-        //EventHandler<CardPlayedEventArgs> handler = CardPlayedEventHandler;
-        //if (handler != null)
-        //{
-        //    handler(this, cardPlayedEventArgs);
-        //}
-    }
+    //    CardPlayedEventArgs cardPlayedEventArgs = new CardPlayedEventArgs(cardPlayed);
+
+    //    EventHandler<CardPlayedEventArgs> handler = CardPlayedEventHandler;
+    //    if (handler != null)
+    //    {
+    //        handler(this, cardPlayedEventArgs);
+    //    }
+    //}
 
     protected virtual void OnRemotePlayerIdReceived(StartMatch startMatch)
     {
@@ -180,6 +296,49 @@ public class RealTimeClient
         }
     }
 
+    protected virtual void OnPlayerMovement(PlayerMovementData playerMovementData)
+    {
+        PlayerMovementArgs playerMovementArgs = new PlayerMovementArgs(
+            playerMovementData.playerXPosition,
+            playerMovementData.playerYPosition,
+            playerMovementData.playerZPosition,
+            playerMovementData.playerId
+            );
+
+        EventHandler<PlayerMovementArgs> handler = PlayerMovementEventHandler;
+
+        if (handler != null)
+        {
+            handler(this, playerMovementArgs);
+        }
+        else
+        {
+            Debug.Log("movement handler is null");
+        }
+
+    }
+
+    protected virtual void OnPlayerGuess(PlayerGuessData playerGuessData)
+    {
+
+        CheckAnswersArgs checkAnswersArgs = new CheckAnswersArgs(
+            playerGuessData.weapon, 
+            playerGuessData.suspect,
+            playerGuessData.location,
+            playerGuessData.playerId,
+            playerGuessData.guessedOnTime
+            );
+
+        EventHandler<CheckAnswersArgs> handler = CheckAnswersEventHandler;
+
+        if (handler != null)
+        {
+            handler(this, checkAnswersArgs);
+        }
+
+
+    }
+
     /// <summary>
     /// Example of sending to a custom message to the server.
     /// 
@@ -192,7 +351,6 @@ public class RealTimeClient
         // https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-sdk-csharp-ref-datatypes.html#realtime-sdk-csharp-ref-datatypes-rtmessage
 
         string payload = JsonUtility.ToJson(realtimePayload);
-        // Debug.Log(payload);
 
         Client.SendMessage(Client.NewMessage(opcode)
             .WithDeliveryIntent(DeliveryIntent.Reliable)
@@ -252,19 +410,6 @@ public class RealTimeClient
     }
 }
 
-public class CardPlayedEventArgs : EventArgs
-{
-    public int card { get; set; }
-    public int plays { get; set; }
-    public string playedBy { get; set; }
-
-    public CardPlayedEventArgs(CardPlayed cardPlayed)
-    {
-        this.card = cardPlayed.card;
-        this.plays = cardPlayed.plays;
-        this.playedBy = cardPlayed.playedBy;
-    }
-}
 
 public class RemotePlayerIdEventArgs : EventArgs
 {
@@ -284,6 +429,70 @@ public class GameOverEventArgs : EventArgs
     {
         this.matchResults = matchResults;
     }
+}
+
+
+
+
+//timers should be handled by determining host and running them locally on host system.
+//host should then trigger the events by simply passing a message with playerId
+
+
+
+//after a player clicks submit, check to see if we have answers from all players
+// if we have answers from all players, or the timer is ended, check the answers
+// and return a bool with whether there is a winner and who the winner is by playerId 
+public class CheckAnswersArgs : EventArgs
+{
+
+
+    public string currentAnswerWeapon { get; set; }
+    public string currentAnswerSuspect { get; set; }
+    public string currentAnswerLocation { get; set; }
+
+    public string currentAnswerPlayerId { get; set; }
+
+    public bool guessedOnTime { get; set; }
+
+    public CheckAnswersArgs(
+        string currentAnswerWeapon, 
+        string currentAnswerSuspect,
+        string currentAnswerLocation,
+        string currentAnswerPlayerId,
+        bool guessedOnTime)
+    {
+        this.currentAnswerWeapon = currentAnswerWeapon;
+        this.currentAnswerSuspect = currentAnswerSuspect;
+        this.currentAnswerLocation = currentAnswerLocation;
+        this.currentAnswerPlayerId = currentAnswerPlayerId;
+        this.guessedOnTime = guessedOnTime;
+     }
+
+}
+
+
+
+//tracks location of each player
+public class PlayerMovementArgs: EventArgs
+{
+
+    public float playerXLocation { get; set; }
+    public float playerYLocation { get; set; }
+    public float playerZLocation { get; set; }
+    public string playerId { get; set; }
+
+
+    public PlayerMovementArgs(float playerXLocation, float playerYLocation, float playerZLocation, string playerId) {
+
+        this.playerXLocation = playerXLocation;
+        this.playerYLocation = playerYLocation;
+        this.playerZLocation = playerZLocation;
+        this.playerId = playerId;
+
+    }
+
+
+
 }
 
 

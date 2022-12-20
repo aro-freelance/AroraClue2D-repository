@@ -200,7 +200,7 @@ public class SQSMessageProcessing : MonoBehaviour
     private IEnumerator FailsafeTimer()
     {
         Debug.Log("FailsafeTimer setup...");
-        yield return new WaitForSecondsRealtime(10 * 60); // 10 minutes
+        yield return new WaitForSecondsRealtime(5 * 60); // 5 minutes
         Debug.Log("FailsafeTimer activated and stopping loop...");
         _fulfillmentMessageReceived = true;
     }

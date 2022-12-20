@@ -9,10 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5782753651290077121}
-  - component: {fileID: 5782753651290077134}
   - component: {fileID: 5782753651290077123}
   - component: {fileID: 5782753651290077120}
-  - component: {fileID: 1798460629573592893}
+  - component: {fileID: -2971312090063306706}
   m_Layer: 0
   m_Name: ServerManager
   m_TagString: Untagged
@@ -35,18 +34,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5782753651290077134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5782753651290077135}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0304867d561b8114fa0c2cea704ea614, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &5782753651290077123
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,7 +58,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52f279b1d788e9c4bba25975d2f0a481, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1798460629573592893
+--- !u!114 &-2971312090063306706
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

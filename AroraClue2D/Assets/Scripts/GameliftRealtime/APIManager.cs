@@ -26,9 +26,8 @@ public class APIManager : MonoBehaviour
 
         if (webRequest.result == UnityWebRequest.Result.Success)
         {
-            //GOT TO HERE... so the server is now set up correctly.  IF THERE ARE ISSUES, HARD CODE SECRET VALUES FOR TESTING
+
             Debug.Log("Success, API call complete!");
-            // Debug.Log(webRequest.downloadHandler.text);
             
             response = webRequest.downloadHandler.text;
         }

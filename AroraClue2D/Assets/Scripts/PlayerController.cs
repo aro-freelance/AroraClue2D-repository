@@ -50,6 +50,13 @@ public class PlayerController : MonoBehaviour {
     void PlayerMovement(){
         theRB.velocity = new Vector2((Input.GetAxisRaw("Horizontal") * moveSpeed), (Input.GetAxisRaw("Vertical") * moveSpeed));
 
+        //if the player is moving
+        if(theRB.velocity.x != 0 || theRB.velocity.y != 0)
+        {
+            GameManager.Instance._movement = true;
+
+        }
+
         myAnimator.SetFloat("moveX", theRB.velocity.x);
         myAnimator.SetFloat("moveY", theRB.velocity.y);
         

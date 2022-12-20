@@ -137,6 +137,28 @@ public class ServerManager : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// 
+    /// When finding a match we first are building a call to the server with apimanager.Post(api, postdata)
+    /// 
+    /// Then we are getting the server response back in the string called response. 
+    /// This response is then converted from JSON to GameSessionPlacementEndpoint (defined in SQSMessageProcessing)
+    /// which we can then use to access the string values such as PlacementId and GameSessionId
+    /// we can then used these strings to make a GameSession and establish a connection 
+    /// using SubscribeToFullfillmentNotifications and EstablishConnectionToRealtimeServer
+    /// 
+    /// Once we establish a connection we will have a realTimeClient which we can use to access the handlers setup there.
+    /// 
+    /// Once we have a realtimeclient and handlers:
+    /// the realtimeclient can be sent codes along with playerids to tell it to call a method.
+    /// 
+    /// When a code is received it is processed by RealtimeClient > OnDataReceived using a switch run by the code int
+    /// This switch tells it which method to use.
+    /// 
+    /// Then we send the data to that function to process using a handler.
+    /// 
+    /// </summary>
     public async void OnFindMatchPressed()
     {
         Debug.Log("Find match pressed");
@@ -144,21 +166,19 @@ public class ServerManager : MonoBehaviour
 
         FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId);
         string jsonPostData = JsonUtility.ToJson(matchMessage);
-        // Debug.Log(jsonPostData);
 
         //localClientPlayerName.text = _playerId;
-        //Debug.Log("local client player name" + _playerId);
-
 
         string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
+
         Debug.Log("response: " + response);
 
         GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
 
-        Debug.Log(gameSessionPlacementInfo);
-
         if (gameSessionPlacementInfo != null)
         {
+
+
             // GameSessionPlacementInfo is a model used to handle both game session placement and game session search results from the Lambda response.
             if (gameSessionPlacementInfo.PlacementId != null)
             {
@@ -187,6 +207,10 @@ public class ServerManager : MonoBehaviour
             {
                 Debug.Log("Game session response not valid...");
             }
+        }
+        else
+        {
+            Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
         }
 
         //_findMatchButton.gameObject.SetActive(false); // remove from UI
@@ -223,35 +247,50 @@ public class ServerManager : MonoBehaviour
         string payload = JsonUtility.ToJson(realtimePayload);
 
         _realTimeClient = new RealTimeClient(ipAddress, port, localUdpPort, playerSessionId, payload, ConnectionType.RT_OVER_WS_UDP_UNSECURED);
-        _realTimeClient.CardPlayedEventHandler += OnCardPlayedEvent;
-        _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
-        _realTimeClient.GameOverEventHandler += OnGameOverEvent;
-    }
 
-    void OnCardPlayedEvent(object sender, CardPlayedEventArgs cardPlayedEventArgs)
-    {
-        Debug.Log($"The card {cardPlayedEventArgs.card} was played by {cardPlayedEventArgs.playedBy}, and had {cardPlayedEventArgs.plays} plays.");
-        CardPlayed(cardPlayedEventArgs);
-    }
-
-    private void CardPlayed(CardPlayedEventArgs cardPlayedEventArgs)
-    {
-        Debug.Log($"card played {cardPlayedEventArgs.card}");
-
-        if (cardPlayedEventArgs.playedBy == _playerId)
+        if(_realTimeClient != null)
         {
-            Debug.Log("local card played");
-            _matchStats.localPlayerCardsPlayed.Add(cardPlayedEventArgs.card.ToString());
+            Debug.Log("realtimeclient: not null");
+
+            //_realTimeClient.CardPlayedEventHandler += OnCardPlayedEvent;
+            _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
+            _realTimeClient.GameOverEventHandler += OnGameOverEvent;
+
 
         }
         else
         {
-            Debug.Log("remote card played");
-            _matchStats.remotePlayerCardsPlayed.Add(cardPlayedEventArgs.card.ToString());
+            Debug.Log("realtimeclient: null");
         }
-
-        _processCardPlay = true;
+        
+        
+        
     }
+
+    //void OnCardPlayedEvent(object sender, CardPlayedEventArgs cardPlayedEventArgs)
+    //{
+    //    Debug.Log($"The card {cardPlayedEventArgs.card} was played by {cardPlayedEventArgs.playedBy}, and had {cardPlayedEventArgs.plays} plays.");
+    //    CardPlayed(cardPlayedEventArgs);
+    //}
+
+    //private void CardPlayed(CardPlayedEventArgs cardPlayedEventArgs)
+    //{
+    //    Debug.Log($"card played {cardPlayedEventArgs.card}");
+
+    //    if (cardPlayedEventArgs.playedBy == _playerId)
+    //    {
+    //        Debug.Log("local card played");
+    //        _matchStats.localPlayerCardsPlayed.Add(cardPlayedEventArgs.card.ToString());
+
+    //    }
+    //    else
+    //    {
+    //        Debug.Log("remote card played");
+    //        _matchStats.remotePlayerCardsPlayed.Add(cardPlayedEventArgs.card.ToString());
+    //    }
+
+    //    _processCardPlay = true;
+    //}
 
     void OnRemotePlayerIdEvent(object sender, RemotePlayerIdEventArgs remotePlayerIdEventArgs)
     {
@@ -335,6 +374,8 @@ public class ServerManager : MonoBehaviour
         //CardPrefab.gameObject.SetActive(false); // turn off source prefab 
     }
 
+
+    //TODO: refer to this example of sending data to server
     public void OnPlayCardPressed()
     {
         //Debug.Log("Play card pressed");
