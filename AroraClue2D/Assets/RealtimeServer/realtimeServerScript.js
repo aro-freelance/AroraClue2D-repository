@@ -33,10 +33,11 @@ const OP_CODE_DISCONNECT_NOTIFICATION = 114;
 
 
 
-const GAME_START_OP = 201;
-const GAMEOVER_OP = 209;
-const START_TIMER_OP = 301;
-const START_GUESS_EVENT_COUNTDOWN = 302;
+const GET_HOST = 199;
+const START_GAME = 201;
+const START_GUESS_EVENT = 202;
+const END_GUESS_EVENT = 203;
+const GAMEOVER = 209;
 
 //these are being used
 const CHECK_ANSWERS = 305;
@@ -248,6 +249,11 @@ function onMessage(gameMessage) {
     logger.info(payload.playerId);
 
     switch (gameMessage.opCode) {
+       
+
+
+       //TODO: add more cases... for each call to server to handle
+
         case PLAYER_MOVEMENT:
             {
                 //process data
@@ -279,7 +285,7 @@ function onMessage(gameMessage) {
                 break;
             }
 
-            //TODO: add move cases... for each call to server to handle
+       
 
 
         case PLAY_CARD_OP:

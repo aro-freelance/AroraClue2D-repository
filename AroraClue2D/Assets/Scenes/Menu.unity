@@ -6491,6 +6491,26 @@ PrefabInstance:
       value: GameManager
       objectReference: {fileID: 0}
     - target: {fileID: 7322261793906013066, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: playerSix
+      value: 
+      objectReference: {fileID: 7636946638460487874, guid: 77a1594f6a423fd44a4f6890acdee225, type: 3}
+    - target: {fileID: 7322261793906013066, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: playerTwo
+      value: 
+      objectReference: {fileID: 6732661876288537154, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
+    - target: {fileID: 7322261793906013066, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: playerFive
+      value: 
+      objectReference: {fileID: 7636946638460487874, guid: 77a1594f6a423fd44a4f6890acdee225, type: 3}
+    - target: {fileID: 7322261793906013066, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: playerFour
+      value: 
+      objectReference: {fileID: 7636946638460487874, guid: 77a1594f6a423fd44a4f6890acdee225, type: 3}
+    - target: {fileID: 7322261793906013066, guid: 14959bac892f0c649b86c543917bd662, type: 3}
+      propertyPath: playerThree
+      value: 
+      objectReference: {fileID: 7636946638460487874, guid: 77a1594f6a423fd44a4f6890acdee225, type: 3}
+    - target: {fileID: 7322261793906013066, guid: 14959bac892f0c649b86c543917bd662, type: 3}
       propertyPath: timerObject
       value: 
       objectReference: {fileID: 1093424690}

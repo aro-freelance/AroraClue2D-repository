@@ -127,6 +127,8 @@ public class RealTimeClient
         Debug.Log("On data received");
         string dataString = BytesToString(data.Data);
 
+        Debug.Log($"[server-sent] OnDataReceived - Sender: {data.Sender} OpCode: {data.OpCode} dataString: {dataString}");
+
         // handle message based on OpCode
         switch (data.OpCode)
         {
@@ -144,7 +146,13 @@ public class RealTimeClient
 
                 break;
 
-            case GameManager.GAME_START_OP:
+
+            case GameManager.GET_HOST:
+                Debug.Log("get host data received");
+
+                break;
+
+            case GameManager.START_GAME:
                 // The game start op tells our game clients that all players have joined and the game should start
                 Debug.Log("Start game op received...");
 
@@ -179,7 +187,7 @@ public class RealTimeClient
 
             //    break;
 
-            case GameManager.GAMEOVER_OP:
+            case GameManager.GAMEOVER:
                 // gives us the match results
                 Debug.Log("Game over op...");
                 
@@ -193,27 +201,28 @@ public class RealTimeClient
                 break;
 
 
-            case GameManager.START_TIMER_OP:
 
-                Debug.Log("Start timer op");
 
-                
-                //TODO: this is not in use. remove?
+            case GameManager.START_GUESS_EVENT:
+
+                Debug.Log("Start guess event data received");
+
+                GameManager.Instance.GuessEvent();
 
                 break;
 
 
-            case GameManager.START_GUESS_EVENT_COUNTDOWN:
 
-                Debug.Log("Start countdown op");
+            case GameManager.END_GUESS_EVENT:
 
-                //TODO: this is not in use. remove?
+                Debug.Log("end guess event data received");
+
 
                 break;
 
             case GameManager.CHECK_ANSWERS:
 
-                Debug.Log("Check answers op");
+                Debug.Log("Check answers op data received");
 
                 PlayerGuessData playerGuessData = JsonConvert.DeserializeObject<PlayerGuessData>(dataString);
 

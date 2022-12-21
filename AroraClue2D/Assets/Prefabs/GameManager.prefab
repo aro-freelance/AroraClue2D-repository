@@ -263,6 +263,11 @@ MonoBehaviour:
   leadDetective: {fileID: 6732661876288537154, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
   timerObjectOutOfMenu: {fileID: 0}
   timerObjectInMenu: {fileID: 0}
+  playerTwo: {fileID: 6732661876288537154, guid: b6950e0c84dc9414aa8a5aa4226af103, type: 3}
+  playerThree: {fileID: 0}
+  playerFour: {fileID: 0}
+  playerFive: {fileID: 0}
+  playerSix: {fileID: 0}
   currentMoney: 0
   timerIsRunning: 0
   secondTimerIsRunning: 0
@@ -274,6 +279,7 @@ MonoBehaviour:
   isReadyToEndGame: 0
   defaultAutoplayDelay: 4
   isGuessCorrect: 0
+  _movement: 0
 --- !u!114 &1132469231
 MonoBehaviour:
   m_ObjectHideFlags: 0

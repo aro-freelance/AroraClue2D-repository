@@ -24,13 +24,11 @@ public class RandomGameElementsManager : MonoBehaviour
     private void Start()
     {
         instance = this;
-
-        RandomizeNewGame();
-
+        
 
     }
 
-    void RandomizeNewGame()
+    public void RandomizeNewGame()
     {
         selectedWeapon = weapons[Random.Range(0, weapons.Length)];
 
