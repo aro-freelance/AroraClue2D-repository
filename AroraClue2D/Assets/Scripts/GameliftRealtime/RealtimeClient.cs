@@ -194,9 +194,9 @@ public class RealTimeClient
                 string gameoverData = BytesToString(data.Data);
                 // Debug.Log(gameoverData);
 
-                MatchResults matchResults = JsonConvert.DeserializeObject<MatchResults>(gameoverData);
+                //MatchResults matchResults = JsonConvert.DeserializeObject<MatchResults>(gameoverData);
 
-                OnGameOver(matchResults);
+                //OnGameOver(matchResults);
 
                 break;
 
@@ -286,18 +286,18 @@ public class RealTimeClient
         }
     }
 
-    protected virtual void OnGameOver(MatchResults matchResults)
-    {
-        Debug.Log("OnGameOver");
+    //protected virtual void OnGameOver(MatchResults matchResults)
+    //{
+    //    Debug.Log("OnGameOver");
 
-        GameOverEventArgs gameOverEventArgs = new GameOverEventArgs(matchResults);
+    //    GameOverEventArgs gameOverEventArgs = new GameOverEventArgs(matchResults);
 
-        EventHandler<GameOverEventArgs> handler = GameOverEventHandler;
-        if (handler != null)
-        {
-            handler(this, gameOverEventArgs);
-        }
-    }
+    //    EventHandler<GameOverEventArgs> handler = GameOverEventHandler;
+    //    if (handler != null)
+    //    {
+    //        handler(this, gameOverEventArgs);
+    //    }
+    //}
 
     protected virtual void OnPlayerMovement(PlayerMovementData playerMovementData)
     {
@@ -426,12 +426,12 @@ public class RemotePlayerIdEventArgs : EventArgs
 
 public class GameOverEventArgs : EventArgs
 {
-    public MatchResults matchResults { get; set; }
+    //public MatchResults matchResults { get; set; }
 
-    public GameOverEventArgs(MatchResults matchResults)
-    {
-        this.matchResults = matchResults;
-    }
+    //public GameOverEventArgs(MatchResults matchResults)
+    //{
+    //    this.matchResults = matchResults;
+    //}
 }
 
 

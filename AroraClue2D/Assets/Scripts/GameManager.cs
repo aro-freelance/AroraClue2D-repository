@@ -18,13 +18,13 @@ public class GameManager : MonoBehaviour
 
     //used to distiguish between the players in multiplayer game
     public int playerNumber;
+    public OtherPlayer[] otherPlayers;
+
 
     //this creates multiple different bools at once.  cleaner than doing each separate. especially when they are all similar. 
     public bool gameMenuOpen, dialogueActive, cutsceneActive, fadingBetweenAreas, movementDisabled;
 
-    public string[] itemsInInventory;
-    public int[] numberOfEachItem;
-    public Item[] referenceItems;
+    
     public GameObject leadDetective;
     public GameObject timerObjectOutOfMenu;
     public GameObject timerObjectInMenu;
@@ -67,8 +67,8 @@ public class GameManager : MonoBehaviour
 
 
     
-    private MatchResults _matchResults = new MatchResults();
-    private MatchStats _matchStats = new MatchStats();
+    //private MatchResults _matchResults = new MatchResults();
+    //private MatchStats _matchStats = new MatchStats();
 
     private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, port: 0);
     private SQSMessageProcessing _sqsMessageProcessing;
@@ -98,7 +98,6 @@ public class GameManager : MonoBehaviour
     private float lastSentX;
     private float lastSentY;
     private float lastSentZ;
-    private float minMovementToSendToServer;
     //used to allow the first movement to be sent
     private bool _firstMovement = true;
 
@@ -164,10 +163,12 @@ public class GameManager : MonoBehaviour
 
 
     //this will be called from ondatareceived after host preps game
-    void SetUIAfterMatchFound()
+    void SetupAfterMatchFound()
     {
 
         launchMenu.SetActive(false);
+
+
 
         //TODO: use this to set the player sprites and names above head using ids
 
@@ -209,7 +210,7 @@ public class GameManager : MonoBehaviour
 
 
     //this function is called on update if ready is true
-    async void ServerProcesses()
+    void ServerProcesses()
     {
         //all players will run these functions (host only functions below)
         
@@ -240,6 +241,7 @@ public class GameManager : MonoBehaviour
                 float x = PlayerController.instance.transform.position.x;
                 float y = PlayerController.instance.transform.position.y;
                 float z = PlayerController.instance.transform.position.z;
+                float minMovementToSendToServer = 2;
 
                 //if first move send to server
                 if (_firstMovement)
@@ -495,9 +497,11 @@ public class GameManager : MonoBehaviour
 
     public void GuessEvent()
     {
-        //move player to location (each player will be placed at spawn based on thier player number)
-        SpawnPlayerAtGuessEvent(playerNumber);
+        //move players (each player will be placed at spawn based on thier player number)
+        LocalCallSpawnForGuessEvent();
 
+
+        //TODO: test that this is working
         //spawn NPC (lead detective)
         if(GameObject.Find("leadDetective") == null)
         {
@@ -642,38 +646,48 @@ public class GameManager : MonoBehaviour
 
 
 
-
-    async void SpawnPlayerAtGuessEvent(int playerNum)
+    //this will be called locally by the player after the host tells them to
+    void LocalCallSpawnForGuessEvent()
     {
-        //TODO: use player number to spawn the player at a spawnpoint in a list of spawn points
-
-        Debug.Log("spawn player for guess event. playernumber: " + playerNum);
-
         fadingBetweenAreas = true;
 
-        switch (playerNum)
+        //handle spawn for local player
+        HandleGuessEventSpawn(playerNumber);
+
+        //handle spawn for other players
+        for (int i = 0; i < otherPlayers.Length; i++)
         {
-            case 0:
+            int playerNum = otherPlayers[i].playerNumber;
+
+            HandleGuessEventSpawn(playerNum);
+
+        }
+
+        fadingBetweenAreas = false;
+
+    }
+
+
+    //spawn the player based on their player number
+    void HandleGuessEventSpawn(int pNum)
+    {
+        switch (pNum)
+        {
+            case 1:
 
                 PlayerController.instance.transform.position = new Vector3(1, -3, transform.position.z);
 
                 break;
 
-            case 1:
+            case 2:
 
                 PlayerController.instance.transform.position = new Vector3(4, -3, transform.position.z);
 
                 break;
 
-            case 2:
-
-                PlayerController.instance.transform.position = new Vector3(-1, -3, transform.position.z);
-
-                break;
-
             case 3:
 
-                PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                PlayerController.instance.transform.position = new Vector3(-1, -3, transform.position.z);
 
                 break;
 
@@ -689,16 +703,20 @@ public class GameManager : MonoBehaviour
 
                 break;
 
+            case 6:
 
-            default:
+                PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+
                 break;
 
 
+            default:
+                break;
         }
 
-        fadingBetweenAreas = false;
-
     }
+
+
 
     async void HostPrepGame()
     {
@@ -718,9 +736,10 @@ public class GameManager : MonoBehaviour
 
         //we need to do a ready check before we continue. server will set ready to true when ready check is done
         ready = false;
+        hostReady = false;
 
         //TODO: data received "prepare the game" response from this will tell the players to run SetUIAfterMatchFound();
-        SetUIAfterMatchFound(); //TODO: remove this to datareceived
+        SetupAfterMatchFound(); //TODO: remove this to datareceived
 
         //this will not run until the ready check completes
         _startGame = true;
@@ -765,6 +784,7 @@ public class GameManager : MonoBehaviour
         //allow the local player to begin moving / load anything needed for the player to begin investigating
         movementDisabled = false;
         cutsceneActive = false;
+        PlayerController.instance.canMove = true;
 
         //close the menu if it is open... TODO: test if this is annoying
         GameMenu.instance.CloseMenu();
@@ -989,7 +1009,10 @@ public class GameManager : MonoBehaviour
         Debug.Log("Find match pressed");
         _findingMatch = true;
 
-        FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId);
+        string name = LaunchMenu.instance.nameInputText.text;
+        string spriteName = LaunchMenu.instance.selectedSpriteName;
+
+        FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId, name, spriteName);
         string jsonPostData = JsonUtility.ToJson(matchMessage);
 
 
@@ -1100,7 +1123,8 @@ public class GameManager : MonoBehaviour
             //TODO: add startgame handler
 
             _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
-            _realTimeClient.GameOverEventHandler += OnGameOverEvent;
+
+            //_realTimeClient.GameOverEventHandler += OnGameOverEvent;
 
             Debug.Log("realtimeclient: " + _realTimeClient);
 
@@ -1233,12 +1257,12 @@ public class GameManager : MonoBehaviour
         _updateRemotePlayerId = true;
     }
 
-    void OnGameOverEvent(object sender, GameOverEventArgs gameOverEventArgs)
-    {
-        Debug.Log($"Game over event received with winner: {gameOverEventArgs.matchResults.winnerId}.");
-        this._matchResults = gameOverEventArgs.matchResults;
-        this._gameOver = true;
-    }
+    //void OnGameOverEvent(object sender, GameOverEventArgs gameOverEventArgs)
+    //{
+    //    Debug.Log($"Game over event received with winner: {gameOverEventArgs.matchResults.winnerId}.");
+    //    this._matchResults = gameOverEventArgs.matchResults;
+    //    this._gameOver = true;
+    //}
 
 
 
@@ -1282,11 +1306,16 @@ public class FindMatch
 {
     public string opCode;
     public string playerId;
+    public string playerName;
+    public string spriteName;
+
     public FindMatch() { }
-    public FindMatch(string opCodeIn, string playerIdIn)
+    public FindMatch(string opCodeIn, string playerIdIn, string playerName, string spriteName)
     {
         this.opCode = opCodeIn;
         this.playerId = playerIdIn;
+        this.playerName = playerName;
+        this.spriteName = spriteName;
     }
 }
 

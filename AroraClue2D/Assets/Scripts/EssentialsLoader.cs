@@ -32,10 +32,7 @@ public class EssentialsLoader : MonoBehaviour
             Instantiate(gameManager);
         }
 
-        if (ServerManager.instance = null)
-        {
-            Instantiate(serverManager);
-        }
+      
 
 
 

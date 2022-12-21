@@ -8,10 +8,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
-using Amazon.Runtime;
-using System.Collections;
-using UnityEngine.UI;
-using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 
 // SQS supports programmatic sending of messages via web service applications as a way to communicate over the Internet
 
