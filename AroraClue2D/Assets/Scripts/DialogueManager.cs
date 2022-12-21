@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -97,7 +98,7 @@ public class DialogueManager : MonoBehaviour
             switch (cutsceneEndType)
             {
                 case "readyToResume":
-                    GameManager.Instance.isReadyToResume = true;
+                    GameManager.Instance.isReadyToEndGuessEvent = true;
                     break;
 
                 case "readyToStartCountdown":

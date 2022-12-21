@@ -94,7 +94,7 @@ public class GameMenu : MonoBehaviour
         SetGuessDropdownLists();
 
 
-        if (GameManager.Instance.secondTimerIsRunning)
+        if (GameManager.Instance.countdownRunning)
         {
             guessWindow.SetActive(true);
         }
@@ -178,7 +178,8 @@ public class GameMenu : MonoBehaviour
         userAnswerSuspect = suspectList[suspectDropdown.value];
         userAnswerLocation = locationList[locationDropdown.value];
 
-        GameManager.Instance.CheckGuess(userAnswerWeapon, userAnswerSuspect, userAnswerLocation);
+        GameManager.Instance.submittedAnswer = true;
+        GameManager.Instance.SubmitAnswer(userAnswerWeapon, userAnswerSuspect, userAnswerLocation);
 
         
 
@@ -186,6 +187,16 @@ public class GameMenu : MonoBehaviour
         guessWindow.SetActive(false);
         CloseMenu();
 
+
+    }
+
+    public void ExitGameButtonPressed()
+    {
+        //end server
+        GameManager.Instance.OnApplicationQuit();
+
+        //go to main menu
+        GameManager.Instance.EndGame();
 
     }
 

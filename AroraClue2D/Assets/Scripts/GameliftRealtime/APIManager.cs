@@ -30,6 +30,7 @@ public class APIManager : MonoBehaviour
             Debug.Log("Success, API call complete!");
             
             response = webRequest.downloadHandler.text;
+
         }
         else
         {

@@ -212,7 +212,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8706413012646779032}
   - component: {fileID: 7322261793906013066}
-  - component: {fileID: 1132469231}
   - component: {fileID: 2062528231954131355}
   m_Layer: 0
   m_Name: GameManager
@@ -257,6 +256,7 @@ MonoBehaviour:
   dialogueActive: 0
   cutsceneActive: 0
   fadingBetweenAreas: 0
+  movementDisabled: 0
   itemsInInventory: []
   numberOfEachItem: 
   referenceItems: []
@@ -280,25 +280,6 @@ MonoBehaviour:
   defaultAutoplayDelay: 4
   isGuessCorrect: 0
   _movement: 0
---- !u!114 &1132469231
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3597904208718001426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b3acffe0aae9e04ba13fbef42bbc4b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  questMarkerNames:
-  - 
-  - Fight the Dragon!
-  - enter cave
-  - go to the new town
-  - meld a new job
-  questMarkerComplete: 
 --- !u!114 &2062528231954131355
 MonoBehaviour:
   m_ObjectHideFlags: 0

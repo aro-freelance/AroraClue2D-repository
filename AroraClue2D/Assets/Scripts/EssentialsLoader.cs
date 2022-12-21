@@ -10,8 +10,12 @@ public class EssentialsLoader : MonoBehaviour
     public GameObject gameManager;
     public GameObject serverManager;
 
+    public static EssentialsLoader instance;
+
     void Start()
     {
+        instance = this;
+
         if(UIFade.instance == null)
         {
             UIFade.instance = Instantiate(UIScreen).GetComponent<UIFade>();

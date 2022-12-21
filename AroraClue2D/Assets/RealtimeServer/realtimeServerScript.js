@@ -33,10 +33,13 @@ const OP_CODE_DISCONNECT_NOTIFICATION = 114;
 
 
 
+
 const GET_HOST = 199;
 const START_GAME = 201;
 const START_GUESS_EVENT = 202;
+const START_COUNTDOWN = 901;
 const END_GUESS_EVENT = 203;
+const RESUME_GAME = 204;
 const GAMEOVER = 209;
 
 //these are being used

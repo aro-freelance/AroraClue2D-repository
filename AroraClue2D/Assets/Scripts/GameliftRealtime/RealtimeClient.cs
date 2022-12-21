@@ -120,7 +120,7 @@ public class RealTimeClient
 
 
     /// <summary>
-    /// Handle data received from the Realtime server  This is on DataRecieved... testing OnMessageRecieved here
+    /// Handle data received from the Realtime server  
     /// </summary>
     private void OnDataReceived(object sender, DataReceivedEventArgs data)
     {
@@ -241,12 +241,6 @@ public class RealTimeClient
                 break;
 
 
-
-
-
-
-
-
             default:
                 Debug.Log("OpCode not found: " + data.OpCode);
                 break;
@@ -333,7 +327,7 @@ public class RealTimeClient
         CheckAnswersArgs checkAnswersArgs = new CheckAnswersArgs(
             playerGuessData.weapon, 
             playerGuessData.suspect,
-            playerGuessData.location,
+            playerGuessData.place,
             playerGuessData.playerId,
             playerGuessData.guessedOnTime
             );
