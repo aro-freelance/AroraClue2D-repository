@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Amazon.Lambda.CognitoEvents</name>
+    </assembly>
+    <members>
+        <member name="T:Amazon.Lambda.CognitoEvents.CognitoEvent">
+            <summary>
+            AWS Cognito event
+            http://docs.aws.amazon.com/cognito/latest/developerguide/cognito-events.html
+            http://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-cognito-sync-trigger
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.DatasetName">
+            <summary>
+            The data set name of the event.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.DatasetRecords">
+            <summary>
+            The map of data set records for the event.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.EventType">
+            <summary>
+            The event type.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.IdentityId">
+            <summary>
+            The identity pool ID associated with the data set.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.IdentityPoolId">
+            <summary>
+            The identity pool ID associated with the data set.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.Region">
+            <summary>
+            The region in which data set resides.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.Version">
+            <summary>
+            The event version.
+            </summary>
+        </member>
+        <member name="T:Amazon.Lambda.CognitoEvents.CognitoEvent.DatasetRecord">
+            <summary>
+            Data set records for the event.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.DatasetRecord.NewValue">
+            <summary>
+            The record's new value.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.DatasetRecord.OldValue">
+            <summary>
+            The record's old value.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.CognitoEvents.CognitoEvent.DatasetRecord.Op">
+            <summary>
+            The operation associated with the record.
+            For a new record or any updates to existing record it is set to "replace".
+            For deleting a record it is set to "remove".
+            </summary>
+        </member>
+    </members>
+</doc>

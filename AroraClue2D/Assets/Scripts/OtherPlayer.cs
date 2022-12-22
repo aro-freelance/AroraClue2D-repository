@@ -8,14 +8,15 @@ public class OtherPlayer : MonoBehaviour
     //this class is used to build an object with all the things the other players need 
 
 
-    //name
-    public string name;
 
-    //playerid
-    public string playerId;
-
+    //set these when the player is received from the server
+    public string playerName;
     //playernumber assigned by server
     public int playerNumber;
+    public string spriteStringName;
+
+    public string playerId;
+
 
     //sprite
     public Sprite sprite;
@@ -23,22 +24,18 @@ public class OtherPlayer : MonoBehaviour
     //location
     public Vector3 location;
 
-    //network status? (friend, blocked, etc)
-    public bool isFriend;
-    public bool isBlocked;
 
     public OtherPlayer() { }
 
-    public OtherPlayer(string name, string playerID, int playerNumber, Sprite sprite, Vector3 location, bool isFriend, bool isBlocked)
+    public OtherPlayer(string playerName, string playerID, int playerNumber, Sprite sprite, Vector3 location, string spriteStringName)
     {
-
-        this.name = name;
+        
+        this.playerName = playerName;
         this.playerId = playerID;
         this.playerNumber = playerNumber;
         this.sprite = sprite;
         this.location = location;
-        this.isFriend = isFriend;
-        this.isBlocked = isBlocked;
+        this.spriteStringName = spriteStringName;
 
     }
 

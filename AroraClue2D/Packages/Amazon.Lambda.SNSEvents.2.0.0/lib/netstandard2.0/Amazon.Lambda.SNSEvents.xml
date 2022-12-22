@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Amazon.Lambda.SNSEvents</name>
+    </assembly>
+    <members>
+        <member name="T:Amazon.Lambda.SNSEvents.SNSEvent">
+            <summary>
+            Simple Notification Service event
+            http://docs.aws.amazon.com/lambda/latest/dg/with-sns.html
+            http://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.Records">
+            <summary>
+            List of SNS records.
+            </summary>
+        </member>
+        <member name="T:Amazon.Lambda.SNSEvents.SNSEvent.SNSRecord">
+            <summary>
+            An SNS message record.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSRecord.EventSource">
+            <summary>
+            The event source.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSRecord.EventSubscriptionArn">
+            <summary>
+            The event subscription ARN.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSRecord.EventVersion">
+            <summary>
+            The event version.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSRecord.Sns">
+            <summary>
+            The SNS message.
+            </summary>
+        </member>
+        <member name="T:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage">
+            <summary>
+            An SNS message record.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.Message">
+            <summary>
+            The message.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.MessageAttributes">
+            <summary>
+            The attributes associated with the message.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.MessageId">
+            <summary>
+            The message id.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.Signature">
+            <summary>
+            The message signature.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.SignatureVersion">
+            <summary>
+            The signature version used to sign the message.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.SigningCertUrl">
+            <summary>
+            The URL for the signing certificate.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.Subject">
+            <summary>
+            The subject for the message.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.Timestamp">
+            <summary>
+            The message time stamp.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.TopicArn">
+            <summary>
+            The topic ARN.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.Type">
+            <summary>
+            The message type.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.SNSMessage.UnsubscribeUrl">
+            <summary>
+            The message unsubscribe URL.
+            </summary>
+        </member>
+        <member name="T:Amazon.Lambda.SNSEvents.SNSEvent.MessageAttribute">
+            <summary>
+            An SNS message attribute.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.MessageAttribute.Type">
+            <summary>
+            The attribute type.
+            </summary>
+        </member>
+        <member name="P:Amazon.Lambda.SNSEvents.SNSEvent.MessageAttribute.Value">
+            <summary>
+            The attribute value.
+            </summary>
+        </member>
+    </members>
+</doc>

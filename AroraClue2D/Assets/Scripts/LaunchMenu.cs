@@ -35,11 +35,20 @@ public class LaunchMenu : MonoBehaviour
         
         instance = this;
 
-        PlayerController.instance.canMove = false;
 
         SetDropdownOptions();
 
         spriteSelectDropdown.onValueChanged.AddListener(UpdateSpriteToMatchDropdown);
+    }
+
+    private void Update()
+    {
+
+        if (this.isActiveAndEnabled)
+        {
+            PlayerController.instance.canMove = false;
+        }
+
     }
 
     private void SetDropdownOptions()

@@ -2,12 +2,25 @@
 using UnityEngine;
 using TMPro;
 using System.Net;
-using Newtonsoft.Json;
 using System;
 using Aws.GameLift.Realtime.Types;
-using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Linq;
+using Amazon.CognitoIdentity;
+using Amazon;
+using Amazon.Lambda.Model;
+using Amazon.Lambda;
+using System.Text;
+using Newtonsoft.Json;
+using System.Net.Sockets;
+using System.Collections.Generic;
 using Unity.VisualScripting;
+using Aws.GameLift.Realtime;
+using System.Collections;
+using System.IO;
+using System.Net.NetworkInformation;
+using UnityEngine.Networking;
+using System.Net.Http;
 
 public class GameManager : MonoBehaviour
 {
@@ -56,7 +69,7 @@ public class GameManager : MonoBehaviour
 
     public bool submittedAnswer = false;
 
-    private bool isHost = false;
+    public bool isHost = false;
 
     //this is used by each player to say they are ready
     private bool ready = false; //TODO: set this to false
@@ -72,8 +85,10 @@ public class GameManager : MonoBehaviour
 
     private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, port: 0);
     private SQSMessageProcessing _sqsMessageProcessing;
-    private RealTimeClient _realTimeClient;
     private APIManager _apiManager;
+
+    private RealTimeClient _realTimeClient;
+
 
     //after CS bools
     public bool isReadyToStartCountdown;
@@ -85,7 +100,7 @@ public class GameManager : MonoBehaviour
 
     public bool isWinner = false;
 
-    private string _playerId;
+    public string _playerId;
     private string _remotePlayerId = "";
 
     //TODO: figure out wtf this is for
@@ -103,41 +118,54 @@ public class GameManager : MonoBehaviour
 
 
     //gamestates
-    private bool _findingMatch = false;
-    private bool _prepGame = false;
-    private bool _startGame = false;
-    private bool _gameOver = false;
+    public bool _findingMatch = false;
+    public bool _hostFireMatch = false;
+    public bool _prepGame = false;
+    public bool _startGame = false;
+    public bool _gameOver = false;
 
-    private bool _startGuessEvent = false;
-    private bool _startCountdown = false;
-    private bool _endGuessEvent = false;
-    private bool _resumeGameAfterGuessEvent = false;
+    public bool _startGuessEvent = false;
+    public bool _startCountdown = false;
+    public bool _endGuessEvent = false;
+    public bool _resumeGameAfterGuessEvent = false;
 
 
     // GameLift server opcodes 
-    // An opcode defined by client and your server script that represents a custom message type
-    //TODO: these are not being used at the moment. remove?
-    public const int OP_CODE_PLAYER_ACCEPTED = 113;
+    public const int OP_CODE_PLAYER_ACCEPTED_S = 113;
+
+    public const int OP_REQUEST_FIND_MATCH_S = 1;
+    public const int OP_FIRE_MATCH_S = 2;
+    public const int OP_PREP_GAME_S = 3;
+    public const int OP_RESUME_GAME_S = 4;
+    public const int OP_GAMEOVER_S = 5;
+    public const int OP_START_GAME_S = 6;
+    public const int OP_START_GUESS_EVENT_S = 7;
+    public const int OP_START_COUNTDOWN_S = 8;
+    public const int OP_END_GUESS_EVENT_S = 9;
+    public const int OP_SET_PLAYER_INFO_S = 10;
+    public const int OP_CHECK_ANSWERS_S = 11;
+    public const int OP_PLAYER_MOVEMENT_S = 12;
 
 
-    //these are being used
-    public const int CHECK_ANSWERS = 305;
-    public const int PLAYER_MOVEMENT = 900;
-    public const int PLAYER_MOVEMENT_RECEIVED = 901;
 
-    public const int GET_HOST = 199;
-    public const int START_GAME = 201;
-    public const int START_GUESS_EVENT = 202;
-    public const int START_COUNTDOWN = 901;
-    public const int END_GUESS_EVENT = 203;
-    public const int RESUME_GAME = 204;
-    public const int GAMEOVER = 209;
+    //messages player sends
+    public const int OP_REQUEST_FIND_MATCH = 501;
+    public const int OP_FIRE_MATCH = 502;
+    public const int OP_PREP_GAME = 503;
+    public const int OP_RESUME_GAME = 504;
+    public const int OP_GAMEOVER = 505;
+    public const int OP_START_GAME = 506;
+    public const int OP_START_GUESS_EVENT = 507;
+    public const int OP_START_COUNTDOWN = 508;
+    public const int OP_END_GUESS_EVENT = 509;
+    public const int OP_SET_PLAYER_INFO = 510;
+    public const int OP_CHECK_ANSWERS = 511;
+    public const int OP_PLAYER_MOVEMENT = 512;
 
-    // Lambda opcodes
-    private const string REQUEST_FIND_MATCH_OP = "1";
 
+    private Aws.GameLift.Realtime.Client _client;
 
-    
+    private Queue<Action> _mainThreadQueue = new Queue<Action>();
 
 
 
@@ -159,6 +187,28 @@ public class GameManager : MonoBehaviour
 
         
         
+    }
+
+    async void HostFireMatch()
+    {
+
+        //TODO: tell the server that the players should resume the investigation
+        GameEventToServer fireMatchServerMessage = new GameEventToServer("2", _playerId);
+
+        string jsonData = JsonUtility.ToJson(fireMatchServerMessage);
+
+        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+
+        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+
+        Debug.Log("firematchservermessage: response code " + responseData.opCode);
+
+        //on dataReceived response fire prep game...
+
+        //this will not run until after ready check
+        _prepGame = true;
+
+
     }
 
 
@@ -214,12 +264,16 @@ public class GameManager : MonoBehaviour
     {
         //all players will run these functions (host only functions below)
         
+        //TODO: check this... or remove
         if (_findingMatch)
         {
             _findingMatch = false;
             //_findMatchButton.enabled = false;
             //_findMatchButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Searching...";
         }
+
+     
+
 
         if (_realTimeClient != null && _realTimeClient.GameStarted)
         {
@@ -276,6 +330,15 @@ public class GameManager : MonoBehaviour
             //this is handled by ready checks to all players through server
             if (hostReady)
             {
+                if(_hostFireMatch)
+                {
+                    _hostFireMatch = false;
+
+                    Debug.Log("_hostFireMatch");
+
+                    HostFireMatch();
+                }
+
                 if (_prepGame)
                 {
                     _prepGame = false;
@@ -1004,66 +1067,225 @@ public class GameManager : MonoBehaviour
     /// Then we send the data to that function to process using a handler.
     /// 
     /// </summary>
-    public async void OnFindMatchPressed()
+    /// 
+
+    // calls our game service Lambda function to get connection info for the Realtime server
+
+
+    private bool IsConnectedToServer = false;
+    private const string DEFAULT_ENDPOINT = "127.0.0.1";
+    private const int DEFAULT_TCP_PORT = 3001;
+    private const int DEFAULT_UDP_PORT = 8921;
+
+    // given a starting and ending range, finds an open UDP port to use as the listening port
+    private int FindAvailableUDPPort(int firstPort, int lastPort)
     {
+        var UDPEndPoints = IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners();
+        List<int> usedPorts = new List<int>();
+        usedPorts.AddRange(from n in UDPEndPoints where n.Port >= firstPort && n.Port <= lastPort select n.Port);
+        usedPorts.Sort();
+        for (int testPort = firstPort; testPort <= lastPort; ++testPort)
+
+        {
+            if (!usedPorts.Contains(testPort))
+            {
+                return testPort;
+            }
+        }
+        return -1;
+    }
+
+    // common code whether we are connecting to a GameLift hosted server or
+    // a local server
+    private IEnumerator ConnectToServer(string ipAddr, int port, string tokenUID)
+    {
+        ClientLogger.LogHandler = (x) => Debug.Log(x);
+        ConnectionToken token = new ConnectionToken(tokenUID, null);
+
+        ClientConfiguration clientConfiguration = ClientConfiguration.Default();
+
+        _client = new Aws.GameLift.Realtime.Client(clientConfiguration);
+        //_client.ConnectionOpen += new EventHandler(OnOpenEvent);
+        //_client.ConnectionClose += new EventHandler(OnCloseEvent);
+        //_client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
+        //_client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
+
+        int UDPListenPort = FindAvailableUDPPort(DEFAULT_UDP_PORT, DEFAULT_UDP_PORT + 20);
+        if (UDPListenPort == -1)
+        {
+            Debug.Log("Unable to find an open UDP listen port");
+            yield break;
+        }
+        else
+        {
+            Debug.Log($"UDP listening on port: {UDPListenPort}");
+        }
+
+        Debug.Log($"[client] Attempting to connect to server ip: {ipAddr} TCP port: {port} Player Session ID: {tokenUID}");
+        _client.Connect(string.IsNullOrEmpty(ipAddr) ? DEFAULT_ENDPOINT : ipAddr, port, UDPListenPort, token);
+
+        while (true)
+        {
+            if (_client.ConnectedAndReady)
+            {
+                IsConnectedToServer = true;
+                Debug.Log("[client] Connected to server");
+                break;
+            }
+            yield return null;
+        }
+    }
+
+    private void ConnectToLocalServer()
+    {
+        var ipAddrPath = Application.dataPath + "/serverip.txt";
+        var ipAddrReader = new StreamReader(ipAddrPath);
+        var ipAddr = ipAddrReader.ReadToEnd();
+        ipAddrReader.Close();
+
+        // typically you'd use the player ID from an authentication system like GameLift,
+        // however for our demo purposes, just pick a random unique ID
+        StartCoroutine(ConnectToServer(ipAddr, DEFAULT_TCP_PORT, Guid.NewGuid().ToString()));
+    }
+
+    public void ActionConnectToServer(string ipAddr, int port, string tokenUID)
+    {
+        StartCoroutine(ConnectToServer(ipAddr, port, tokenUID));
+    }
+
+    // calls our game service Lambda function to get connection info for the Realtime server
+    private async void ConnectToGameLiftServer()
+    {
+        Debug.Log("Reaching out to client service Lambda function");
+
+        //AWSConfigs.AWSRegion = "us-east-1"; // Your region here
+        //AWSConfigs.HttpClient = AWSConfigs.HttpClientOption.UnityWebRequest;
+        // paste this in from the Amazon Cognito Identity Pool console
+        
+        CognitoAWSCredentials credentials = new CognitoAWSCredentials(
+            PrivateConsts.instance.IdentityPool, // Your identity pool ID here
+            RegionEndpoint.USEast1 // Your region here
+        );
+
+        AmazonLambdaClient client = new AmazonLambdaClient(credentials, RegionEndpoint.USEast1);
+
+
+        InvokeRequest request = new InvokeRequest
+        {
+            FunctionName = "ConnectClientToServer",
+            //Payload = "hello world",
+            //InvocationType = "Event",
+            InvocationType = InvocationType.RequestResponse,
+            
+            
+        };
+
+
+
+        InvokeResponse response = await client.InvokeAsync(request);
+
+
+        if (response.FunctionError == null)
+        {
+            if (response.StatusCode == 200)
+            {
+                var payload = Encoding.ASCII.GetString(response.Payload.ToArray()) + "\n";
+                PlayerSessionObject playerSessionObj = JsonUtility.FromJson<PlayerSessionObject>(payload);
+
+                if (playerSessionObj.FleetId == null)
+                {
+                    Debug.Log($"Error in Lambda: {payload}");
+                }
+                else
+                {
+                    QForMainThread(ActionConnectToServer, playerSessionObj.IpAddress, int.Parse(playerSessionObj.Port), playerSessionObj.PlayerSessionId);
+                }
+            }
+        }
+        else
+        {
+            //might need better error message?
+            Debug.LogError(response.FunctionError.ToString());
+        }
+
+
+
+
+
+    }
+
+
+
+
+    public async void OnFindMatchPressed()
+    { 
+
         Debug.Log("Find match pressed");
         _findingMatch = true;
 
         string name = LaunchMenu.instance.nameInputText.text;
         string spriteName = LaunchMenu.instance.selectedSpriteName;
 
-        FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId, name, spriteName);
+        FindMatch matchMessage = new FindMatch("1", _playerId);
         string jsonPostData = JsonUtility.ToJson(matchMessage);
 
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
 
-        Debug.Log("response: " + response);
+        
 
-        GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
-
-        if (gameSessionPlacementInfo != null)
-        {
+        
 
 
-            // GameSessionPlacementInfo is a model used to handle both game session placement and game session search results from the Lambda response.
-            if (gameSessionPlacementInfo.PlacementId != null)
-            {
-                // The response was from a placement request
-                Debug.Log("Game session placement request submitted.");
 
-                // Debug.Log(gameSessionPlacementInfo.PlacementId);
 
-                // subscribe to receive the player placement fulfillment notification
-                await SubscribeToFulfillmentNotifications(gameSessionPlacementInfo.PlacementId);
+        //GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
 
-            }
-            else if (gameSessionPlacementInfo.GameSessionId != null)
-            {
-                // The response was for a found game session which also contains info for created player session
-                Debug.Log("Game session found!");
-                // Debug.Log(gameSessionPlacementInfo.GameSessionId);
+        //if (gameSessionPlacementInfo != null)
+        //{
 
-                Int32.TryParse(gameSessionPlacementInfo.Port, out int portAsInt);
+        //    //if the player is looking for a game to join
+        //    if (gameSessionPlacementInfo.PlacementId != null)
+        //    {
+        //        // The response was from a placement request
+        //        Debug.Log("Game session placement request submitted.  placementId = " + gameSessionPlacementInfo.PlacementId);
 
-                
 
-                // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
-                // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
-                EstablishConnectionToRealtimeServer(gameSessionPlacementInfo.IpAddress, portAsInt, gameSessionPlacementInfo.PlayerSessionId);
-            }
-            else
-            {
-                Debug.Log("Game session response not valid...");
-            }
-        }
-        else
-        {
-            Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
-        }
+        //        // subscribe to receive the player placement fulfillment notification
+        //        await SubscribeToFulfillmentNotifications(gameSessionPlacementInfo.PlacementId);
+
+        //    }
+        //    //if the player has found a game to join
+        //    else if (gameSessionPlacementInfo.GameSessionId != null)
+        //    {
+        //        // The response was for a found game session which also contains info for created player session
+        //        Debug.Log("Game session found!");
+        //        // Debug.Log(gameSessionPlacementInfo.GameSessionId);
+
+        //        Int32.TryParse(gameSessionPlacementInfo.Port, out int portAsInt);
+
+
+
+        //        // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
+        //        // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
+        //        EstablishConnectionToRealtimeServer(gameSessionPlacementInfo.IpAddress, portAsInt,
+        //            gameSessionPlacementInfo.PlayerSessionId);
+        //    }
+        //    else
+        //    {
+        //        Debug.Log("Game session response not valid...");
+        //    }
+        //}
+        //else
+        //{
+        //    Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
+        //}
 
         //_findMatchButton.gameObject.SetActive(false); // remove from UI
     }
+
+
+
 
 
     //TODO: @HERE this function is still giving a URI issue. It is trying to start a game session and then failing to with a uri error
@@ -1076,7 +1298,8 @@ public class GameManager : MonoBehaviour
         //show UI to let player know something is loading
         LoadingMatchUI(true);
 
-        PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(placementId);
+        PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = 
+            await SQSMessageProcessing.instance.SubscribeToFulfillmentNotifications(placementId);
 
         //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
         LoadingMatchUI(false);
@@ -1091,6 +1314,8 @@ public class GameManager : MonoBehaviour
             EstablishConnectionToRealtimeServer(playerPlacementFulfillmentInfo.ipAddress, playerPlacementFulfillmentInfo.port,
                 playerPlacementFulfillmentInfo.placedPlayerSessions[0].playerSessionId);
 
+            
+
             return true;
         }
         else
@@ -1099,6 +1324,8 @@ public class GameManager : MonoBehaviour
             return false;
         }
     }
+
+    
 
     private void EstablishConnectionToRealtimeServer(string ipAddress, int port, string playerSessionId)
     {
@@ -1128,7 +1355,7 @@ public class GameManager : MonoBehaviour
 
             Debug.Log("realtimeclient: " + _realTimeClient);
 
-            CheckIfHost();
+            SendPlayerInfo();
 
             //we should turn this on... but it will not run until ready to true.. therefore we can
             //add a ready make sure that all the players have joined? before we fire this off in Update.
@@ -1159,37 +1386,27 @@ public class GameManager : MonoBehaviour
     }
 
 
-    async void CheckIfHost()
+    async void SendPlayerInfo()
     {
         //determine if player is host by asking server.. if they are isHost = true
 
+        //at this point the player number will be set... so also send the name and sprite name
+        string name = LaunchMenu.instance.nameInputText.text;
+        string spriteName = LaunchMenu.instance.selectedSpriteName;
 
-        GameEventToServer getHost = new GameEventToServer("199", _playerId);
+        SetPlayerInfo setPlayerInfo = new SetPlayerInfo("199", _playerId, name, spriteName, 0);
 
-        string jsonData = JsonUtility.ToJson(getHost);
+        string jsonData = JsonUtility.ToJson(setPlayerInfo);
 
 
         string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
 
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+        SetPlayerInfo responseData = JsonConvert.DeserializeObject<SetPlayerInfo>(response);
 
-        if (responseData != null)
-        {
-            string responsePlayerId = responseData.playerId;
+        //TODO: on data received this needs to set the host if the player number = 1
 
-            if (responsePlayerId == _playerId)
-            {
-                Debug.Log("you are the host");
-                isHost = true;
-            }
-            else
-            {
-                //this should be an empty string if not the host
-                Debug.Log("you are not the host. reponseid = " + responsePlayerId + " . your id = " + _playerId);
-                isHost = false;
-            }
-        }
+        
     }
 
     
@@ -1297,7 +1514,69 @@ public class GameManager : MonoBehaviour
 #endif
     }
 
+
+
+
+    
+
+    private void QForMainThread(Action fn)
+    {
+        lock (_mainThreadQueue)
+        {
+            _mainThreadQueue.Enqueue(() => { fn(); });
+        }
+    }
+
+    private void QForMainThread<T1>(Action<T1> fn, T1 p1)
+    {
+        lock (_mainThreadQueue)
+        {
+            _mainThreadQueue.Enqueue(() => { fn(p1); });
+        }
+    }
+
+    private void QForMainThread<T1, T2>(Action<T1, T2> fn, T1 p1, T2 p2)
+    {
+        lock (_mainThreadQueue)
+        {
+            _mainThreadQueue.Enqueue(() => { fn(p1, p2); });
+        }
+    }
+
+    private void QForMainThread<T1, T2, T3>(Action<T1, T2, T3> fn, T1 p1, T2 p2, T3 p3)
+    {
+        lock (_mainThreadQueue)
+        {
+            _mainThreadQueue.Enqueue(() => { fn(p1, p2, p3); });
+        }
+    }
+
+
+    private void RunMainThreadQueueActions()
+    {
+        // as our server messages come in on their own thread
+        // we need to queue them up and run them on the main thread
+        // when the methods need to interact with Unity
+        lock (_mainThreadQueue)
+        {
+            while (_mainThreadQueue.Count > 0)
+            {
+                _mainThreadQueue.Dequeue().Invoke();
+            }
+        }
+    }
+
+
+
+
+
 }
+
+
+
+
+
+
 
 
 
@@ -1306,16 +1585,12 @@ public class FindMatch
 {
     public string opCode;
     public string playerId;
-    public string playerName;
-    public string spriteName;
 
     public FindMatch() { }
-    public FindMatch(string opCodeIn, string playerIdIn, string playerName, string spriteName)
+    public FindMatch(string opCodeIn, string playerIdIn)
     {
         this.opCode = opCodeIn;
         this.playerId = playerIdIn;
-        this.playerName = playerName;
-        this.spriteName = spriteName;
     }
 }
 
@@ -1466,7 +1741,7 @@ public class AnswerCheckResponse
 
 }
 
-
+[Serializable]
 public class NewGameData
 {
 
@@ -1486,8 +1761,41 @@ public class NewGameData
         this.place = place;
 
     }
+}
 
+[Serializable]
+public class SetPlayerInfo
+{
+    public string opCode;
+    public string playerId;
+    public string playerName;
+    public string spriteName;
+    public int playerNumber;
 
+    public SetPlayerInfo() { }
+
+    public SetPlayerInfo(string opCode, string playerId, string playerName, string spriteName, int playerNumber)
+    {
+        this.opCode = opCode;
+        this.playerId = playerId;
+        this.playerName = playerName;
+        this.spriteName = spriteName;
+        this.playerNumber = playerNumber;
+    }
+}
+
+// This data structure is returned by the client service when a game match is found
+[System.Serializable]
+public class PlayerSessionObject
+{
+    public string PlayerSessionId;
+    public string PlayerId;
+    public string GameSessionId;
+    public string FleetId;
+    public string CreationTime;
+    public string Status;
+    public string IpAddress;
+    public string Port;
 }
 
 

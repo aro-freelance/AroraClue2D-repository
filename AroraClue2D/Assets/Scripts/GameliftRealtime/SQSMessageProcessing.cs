@@ -29,11 +29,12 @@ public class SQSMessageProcessing : MonoBehaviour
     private Coroutine _fulfillmentFailsafeCoroutine;
     private bool _fulfillmentMessageReceived = false;
 
-
+    public static SQSMessageProcessing instance;
     
 
     void Start()
     {
+        instance = this;
 
         IdentityPool = PrivateConsts.instance.IdentityPool;
         SQSURL = PrivateConsts.instance.SQSURL;
@@ -61,25 +62,14 @@ public class SQSMessageProcessing : MonoBehaviour
         _fulfillmentFailsafeCoroutine = StartCoroutine(FailsafeTimer());
         PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = null;
 
+
+
         do
         {
-            //Debug.Log("client : " + _sqsClient);
-            //Debug.Log("sqsurl : " + SQSURL);
-
-            //var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
-
-            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest
-            {
-                QueueUrl = SQSURL,
-                MaxNumberOfMessages = MaxMessages,
-                WaitTimeSeconds = WaitTime
-            };
-
             Debug.Log("ping");
+            var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
 
-            ReceiveMessageResponse msg = await _sqsClient.ReceiveMessageAsync(receiveMessageRequest); //error here
-
-            Debug.Log("msg count " + msg.Messages.Count);
+            Debug.Log("message made in sqs subscribe fullfillmenet");
 
             if (msg.Messages.Count != 0)
             {
@@ -105,13 +95,62 @@ public class SQSMessageProcessing : MonoBehaviour
 
                 // we don't break loop here because the message received wasn't for this player
             }
-            else
-            {
-                _fulfillmentMessageReceived = true;
-                Debug.Log("no messages");
-            }
-
         } while (!_fulfillmentMessageReceived);
+
+
+
+
+        //do
+        //{
+        //    //Debug.Log("client : " + _sqsClient);
+        //    //Debug.Log("sqsurl : " + SQSURL);
+
+        //    //var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
+
+        //    ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest
+        //    {
+        //        QueueUrl = SQSURL,
+        //        MaxNumberOfMessages = MaxMessages,
+        //        WaitTimeSeconds = WaitTime
+        //    };
+
+        //    Debug.Log("ping");
+
+        //    ReceiveMessageResponse msg = await _sqsClient.ReceiveMessageAsync(receiveMessageRequest); //error here
+
+        //    Debug.Log("msg count " + msg.Messages.Count);
+
+        //    if (msg.Messages.Count != 0)
+        //    {
+        //        Debug.Log("SubscribeToFulfillmentNotifications received message...");
+
+        //        playerPlacementFulfillmentInfo = ConvertMessage(msg.Messages[0].Body);
+
+        //        // make sure this notification was for our player
+        //        if (playerPlacementFulfillmentInfo != null && playerPlacementFulfillmentInfo.placementId == placementId)
+        //        {
+        //            Debug.Log("Placement fulfilled, break loop...");
+        //            _fulfillmentMessageReceived = true; // break loop
+
+        //            // Delete consumed message as it is no longer necessary to leave it in the queue.
+        //            await DeleteMessage(_sqsClient, msg.Messages[0], SQSURL);
+
+        //            if (_fulfillmentFailsafeCoroutine != null)
+        //            {
+        //                // kill failsafe coroutine
+        //                StopCoroutine(_fulfillmentFailsafeCoroutine);
+        //            }
+        //        }
+
+        //        // we don't break loop here because the message received wasn't for this player
+        //    }
+        //    else
+        //    {
+        //        _fulfillmentMessageReceived = true;
+        //        Debug.Log("no messages");
+        //    }
+
+        //} while (!_fulfillmentMessageReceived);
 
         return playerPlacementFulfillmentInfo;
     }
@@ -144,7 +183,7 @@ public class SQSMessageProcessing : MonoBehaviour
                         // Debug.Log("placementId: " + networkMessage.Message.detail.placementId);
                         // Debug.Log("gameSessionArn: " + networkMessage.Message.detail.gameSessionArn);
 
-                        Int32.TryParse(networkMessage.Message.detail.port, out int portAsInt);
+                        int.TryParse(networkMessage.Message.detail.port, out int portAsInt);
 
                         PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = new PlayerPlacementFulfillmentInfo
                         {

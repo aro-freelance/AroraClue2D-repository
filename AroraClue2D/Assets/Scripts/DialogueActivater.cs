@@ -59,15 +59,15 @@ public class DialogueActivater : MonoBehaviour
             switch (random)
             {
                 case 0:
-                    lines = new System.String[] { 
+                    lines = new string[] { 
                         "I found the " + weaponString};
                     break;
                 case 1:
-                    lines = new System.String[] {
+                    lines = new string[] {
                          weaponString};
                     break;
                 case 2:
-                    lines = new System.String[] {
+                    lines = new string[] {
                         "Found the " + weaponString};
                     break;
 
@@ -94,15 +94,15 @@ public class DialogueActivater : MonoBehaviour
             switch (random)
             {
                 case 0:
-                    lines = new System.String[] {
+                    lines = new string[] {
                         "I found the " + personString};
                     break;
                 case 1:
-                    lines = new System.String[] {
+                    lines = new string[] {
                          personString};
                     break;
                 case 2:
-                    lines = new System.String[] {
+                    lines = new string[] {
                         "Found the " + personString};
                     break;
 
@@ -126,15 +126,15 @@ public class DialogueActivater : MonoBehaviour
             switch (random)
             {
                 case 0:
-                    lines = new System.String[] {
+                    lines = new string[] {
                         "I found the " + placeString};
                     break;
                 case 1:
-                    lines = new System.String[] {
+                    lines = new string[] {
                          placeString};
                     break;
                 case 2:
-                    lines = new System.String[] {
+                    lines = new string[] {
                         "Found the " + placeString};
                     break;
 
