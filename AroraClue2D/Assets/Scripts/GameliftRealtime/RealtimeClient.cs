@@ -123,7 +123,7 @@ public class RealTimeClient
 
         Debug.Log($"[server-sent] OnDataReceived - Sender: {data.Sender} OpCode: {data.OpCode} dataString: {dataString}");
 
-        // handle message based on OpCode
+        // handle message based on OpCode the server sent
         switch (data.OpCode)
         {
             case 200:
@@ -149,12 +149,18 @@ public class RealTimeClient
                 break;
 
 
-            case GameManager.GET_HOST:
+            case GameManager.OP_SET_PLAYER_INFO_S:
                 Debug.Log("get host data received");
 
                 break;
 
-            case GameManager.START_GAME:
+
+            case GameManager.OP_PREP_GAME_S:
+                Debug.Log("prep game data received");
+
+                break;
+
+            case GameManager.OP_START_GAME_S:
                 // The game start op tells our game clients that all players have joined and the game should start
                 Debug.Log("Start game op received...");
 
@@ -189,7 +195,7 @@ public class RealTimeClient
 
             //    break;
 
-            case GameManager.GAMEOVER:
+            case GameManager.OP_GAMEOVER_S:
                 // gives us the match results
                 Debug.Log("Game over op...");
                 
@@ -205,7 +211,7 @@ public class RealTimeClient
 
 
 
-            case GameManager.START_GUESS_EVENT:
+            case GameManager.OP_START_GUESS_EVENT_S:
 
                 Debug.Log("Start guess event data received");
 
@@ -215,14 +221,14 @@ public class RealTimeClient
 
 
 
-            case GameManager.END_GUESS_EVENT:
+            case GameManager.OP_END_GUESS_EVENT_S:
 
                 Debug.Log("end guess event data received");
 
 
                 break;
 
-            case GameManager.CHECK_ANSWERS:
+            case GameManager.OP_CHECK_ANSWERS_S:
 
                 Debug.Log("Check answers op data received");
 
@@ -233,12 +239,15 @@ public class RealTimeClient
                 break;
 
 
-            case GameManager.PLAYER_MOVEMENT_RECEIVED:
+            case GameManager.OP_PLAYER_MOVEMENT_S:
 
                 Debug.Log("realtimeclient: player movement received in switch");
                 PlayerMovementData playerMovementData = JsonConvert.DeserializeObject<PlayerMovementData>(dataString);
 
-                OnPlayerMovement(playerMovementData);
+                //OnPlayerMovement(playerMovementData);
+
+                //TODO: use this data to set the position of player whose id was received 
+                //... unless it is this player's id... should update server code to not send it to the player whose id it is
 
                 break;
 

@@ -1,6 +1,6 @@
 ﻿// Based on source: https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script.html
 
-//ARORA 0.0.5
+//ARORA 0.0.7
 
 //this handles player interactions on the server.  
 
@@ -21,35 +21,55 @@ const tickTime = 1000;
 const minimumElapsedTime = 30; //120;
 
 var session; // The Realtime server session object
+let sessionTimeoutTimer = null;
+const SESSION_TIMEOUT = 1 * 60 & 1000; // mins to wait * secs/min * milliseconds/second ....  1 minute
+
 var logger; // Log at appropriate level via .info(), .warn(), .error(), .debug()
+
+
 var startTime; // Records the time the process started
 var activePlayers = 0; // Records the number of connected players
 var onProcessStartedCalled = false; // Record if onProcessStarted has been called
 
-// Example custom op codes for user-defined messages
-// Any positive op code number can be defined here. These should match your client code.
+//messages server sends
 const OP_CODE_PLAYER_ACCEPTED = 113;
 const OP_CODE_DISCONNECT_NOTIFICATION = 114;
 
+const OP_REQUEST_FIND_MATCH_S = 1;
+const OP_FIRE_MATCH_S = 2;
+const OP_PREP_GAME_S = 3;
+const OP_RESUME_GAME_S = 4;
+const OP_GAMEOVER_S = 5;
+const OP_START_GAME_S = 6;
+const OP_START_GUESS_EVENT_S = 7;
+const OP_START_COUNTDOWN_S = 8;
+const OP_END_GUESS_EVENT_S = 9;
+const OP_SET_PLAYER_INFO_S = 10;
+const OP_CHECK_ANSWERS_S = 11;
+const OP_PLAYER_MOVEMENT_S = 12;
+
+
+//messages player sends
+
+const OP_REQUEST_FIND_MATCH = 501;
+const OP_FIRE_MATCH = 502;
+const OP_PREP_GAME = 503;
+const OP_RESUME_GAME = 504;
+const OP_GAMEOVER = 505;
+const OP_START_GAME = 506;
+const OP_START_GUESS_EVENT = 507;
+const OP_START_COUNTDOWN = 508;
+const OP_END_GUESS_EVENT = 509;
+const OP_SET_PLAYER_INFO = 510;
+const OP_CHECK_ANSWERS = 511;
+const OP_PLAYER_MOVEMENT = 512;
+
+
+let players = [];
+let logicalPlayerIDs = {};
 
 
 
-const GET_HOST = 199;
-const START_GAME = 201;
-const START_GUESS_EVENT = 202;
-const START_COUNTDOWN = 901;
-const END_GUESS_EVENT = 203;
-const RESUME_GAME = 204;
-const GAMEOVER = 209;
-
-//these are being used
-const CHECK_ANSWERS = 305;
-const PLAYER_MOVEMENT = 900;
-const PLAYER_MOVEMENT_RECEIVED = 901;
-
-
-
-let playersInfo = [];
 
 let serverConnected = false;
 
@@ -70,6 +90,25 @@ let hintLocation = null;
 let host = null;
 let winner = null;
 let gameover = false;
+
+
+// note that the strings will be Base64 encoded, so they can't contain colon, comma or double quote
+// This function takes a list of peers and then send the opcode and string to the peer
+/*
+function SendStringToClient(peerIds, opCode, stringToSend) {
+    session.getLogger().info("[app] SendStringToClient: peerIds = " + peerIds.toString() + " opCode = " + opCode + " stringToSend = " + stringToSend);
+
+    let gameMessage = session.newTextGameMessage(opCode, session.getServerId(), stringToSend);
+    let peerArrayLen = peerIds.length;
+
+    for (let index = 0; index < peerArrayLen; ++index) {
+        session.getLogger().info("[app] SendStringToClient: sendMessageT " + gameMessage.toString() + " " + peerIds[index].toString());
+        session.sendMessage(gameMessage, peerIds[index]);
+    };
+} */
+
+
+
 
 // Called when game server is initialized, passed server's object of current session
 function init(rtSession) {
@@ -102,8 +141,8 @@ function onStartGameSession(gameSession) {
     // Complete any game session set-up
 
     // Set up an example tick loop to perform server initiated actions
-    startTime = getTimeInS();
-    tickLoop();
+    //startTime = getTimeInS();
+    //tickLoop();
 }
 
 // Handle process termination if the process is being terminated by GameLift
@@ -138,7 +177,7 @@ function onPlayerConnect(connectMsg) {
     };
     logger.info(playerConnected);
 
-    playersInfo.push(playerConnected);
+    players.push(playerConnected);
 
     // Perform any validation needed for connectMsg.payload, connectMsg.peerId
     return true;
@@ -149,11 +188,11 @@ function onPlayerAccepted(player) {
     logger.info("onPlayerAccepted");
     logger.info(player);
 
-    playersInfo.forEach((playerInfo) => {
-        logger.info("onPlayerAccepted playersInfo checking peerId");
+    players.forEach((playerInfo) => {
+        logger.info("onPlayerAccepted players checking peerId");
 
         if (playerInfo.peerId == player.peerId) {
-            logger.info("onPlayerAccepted playersInfo mark active");
+            logger.info("onPlayerAccepted players mark active");
 
             // not sure if we need to do this...
             playerInfo.accepted = true;
@@ -185,14 +224,14 @@ function onPlayerAccepted(player) {
         logger.info("onPlayerAccepted activePlayers > 1");
 
         // getPlayers returns "a list of peer IDs for players that are currently connected to the game session"
-        // So, let's match these players to the ones stored in playersInfo
+        // So, let's match these players to the ones stored in players
         session.getPlayers().forEach((playerSession, playerId) => {
 
             logger.info("onPlayerAccepted players loop");
             logger.info(playerSession);
             logger.info(playerId);
 
-            playersInfo.forEach((playerInfo) => {
+            players.forEach((playerInfo) => {
                 logger.info("onPlayerAccepted players playerInfo loop");
                 logger.info("playerInfo.peerId: " + playerInfo.peerId + ", playerSession.peerId: " + playerSession.peerId + ", playerInfo.active: " + playerInfo.active);
 
@@ -206,7 +245,10 @@ function onPlayerAccepted(player) {
                     logger.info(gameStartPayload);
 
                     // send out the match has started along with the opponent's playerId
-                    const startMatchMessage = session.newTextGameMessage(GAME_START_OP, session.getServerId(), JSON.stringify(gameStartPayload));
+                    
+                    
+                    //TODO: start the prep phase if we have enough players
+                    const startMatchMessage = session.newTextGameMessage(OP_PREP_GAME, session.getServerId(), JSON.stringify(gameStartPayload));
                     session.sendReliableMessage(startMatchMessage, playerSession.peerId);
                 }
             });
@@ -231,7 +273,7 @@ function onPlayerDisconnect(peerId) {
     });
     activePlayers--;
 
-    playersInfo.forEach((playerInfo) => {
+    players.forEach((playerInfo) => {
         if (playerInfo.peerId == peerId) {
             playerInfo.active = false;
         }
@@ -239,7 +281,7 @@ function onPlayerDisconnect(peerId) {
 }
 
 
-// Handle a message to the server
+// here  the server is receiving a message from the game and handling it
 function onMessage(gameMessage) {
     logger.info("onMessage");
     logger.info(gameMessage);
@@ -252,15 +294,48 @@ function onMessage(gameMessage) {
     logger.info(payload.playerId);
 
     switch (gameMessage.opCode) {
+
+    //connect
+        case 1:
+
+        //todo if this is called then update it with initial connect stuff
+        //OTHERWISE REMOVE THIS BLOCK
+
+        let movementData = {
+                    playerXPosition: 15,
+                    playerYPosition: 15,
+                    playerZPosition: 15,
+                    playerId: payload.playerId
+                };
+                
+                const movementMSG = session.newTextGameMessage(
+                    OP_PLAYER_MOVEMENT_S, session.getServerId(), JSON.stringify(movementData));
+
+                    for (let index = 0; index < allPlayersLength; ++index) {
+
+                    logger.info("Sending movement data to player " + players[index].peerId);
+
+                    session.sendReliableMessage(movementMSG, player[index].peerId);
+
+                }
+
+
+                //TODO: remove
+                //this is for testing... just one message and then ending
+                logger.info("ENDING BECAUSE YOU PUT A TEST END HERE. Completed process ending with: " + outcome);
+                
+                gameoverCleanup();
+                
+                break;
        
-
-
-       //TODO: add more cases... for each call to server to handle
-
-        case PLAYER_MOVEMENT:
+        case OP_PLAYER_MOVEMENT:
             {
-                //process data
-                let allPlayersLength = playersInfo.length;
+                //when the server receives movement data from the player 
+               
+                
+                //1. the server make a PlayerMovementData object to send back to players
+                // this object will contain location and id data from the player who sent it
+                
 
                 let movementData = {
                     playerXPosition: payload.playerXPosition,
@@ -272,26 +347,40 @@ function onMessage(gameMessage) {
                 logger.info("movement data")
                 logger.info(movementData);
 
-                //make message
-                const movementMSG = session.newTextGameMessage(
-                    PLAYER_MOVEMENT_RECEIVED, session.getServerId(), JSON.stringify(movementData));
 
-                //send message
+                //2. Then it make a message 
+
+                let allPlayersLength = players.length;
+
+                const movementMSG = session.newTextGameMessage(
+                    OP_PLAYER_MOVEMENT_S, session.getServerId(), JSON.stringify(movementData));
+
+                //3. Then it should send that message to each player
+
+                //this sends a string, and we are sending an object... so use the other method for now?
+                //SendStringToClient(players, OP_PLAYER_MOVEMENT_S, movementMSG);
+
                 for (let index = 0; index < allPlayersLength; ++index) {
-                    logger.info("Sending draw card message to player " + playersInfo[index].peerId);
-                    session.sendReliableMessage(cardDrawMsg, playersInfo[index].peerId);
+
+                    logger.info("Sending movement data to player " + players[index].peerId);
+
+                    session.sendReliableMessage(movementMSG, player[index].peerId);
+
                 }
 
-                //checkstate after any changes
-                //TODO: do stuff here if needed after movement
+
+                //TODO: remove
+                //this is for testing... just one message and then ending
+                logger.info("ENDING BECAUSE YOU PUT A TEST END HERE. Completed process ending with: " + outcome);
+                
+                gameoverCleanup();
 
                 break;
             }
 
        
-
-
-        case PLAY_CARD_OP:
+            //leave this here for now as an example PLAYCARDOP removed so i hardcoded a number for example (unused)
+             case 800:
             {
                 logger.info("PLAY_CARD_OP hit");
 
@@ -299,7 +388,6 @@ function onMessage(gameMessage) {
                 var cardDrawnSuccess = addCardDraw(cardDrawn, payload.playerId);
 
                 if (cardDrawnSuccess) {
-
 
                     let allPlayersLength = playersInfo.length;
                     let cardDrawData = {
@@ -316,6 +404,7 @@ function onMessage(gameMessage) {
                         session.sendReliableMessage(cardDrawMsg, playersInfo[index].peerId);
                     }
 
+                    //if something needs to happen after this data is sent...
                     checkGameOver();
 
                 } else {
@@ -325,6 +414,8 @@ function onMessage(gameMessage) {
 
                 break;
             }
+
+
     }
 }
 
@@ -390,15 +481,16 @@ function determineWinner() {
     // send out game over messages with winner
     const gameoverMsg = session.newTextGameMessage(GAMEOVER_OP, session.getServerId(), JSON.stringify(result));
 
-    for (let index = 0; index < playersInfo.length; ++index) {
-        logger.info("Sending game over message to player " + playersInfo[index].peerId);
-        session.sendReliableMessage(gameoverMsg, playersInfo[index].peerId);
+    for (let index = 0; index < players.length; ++index) {
+        logger.info("Sending game over message to player " + players[index].peerId);
+        session.sendReliableMessage(gameoverMsg, players[index].peerId);
     }
 }
 
 // The cardPlays object looks like this:
 // {"eb051e15-1337-4071-b8a9-b9b0da32d7e2":[1,5],"27f87c33-c6f8-45f2-b403-801eaf4f4a2d":[5,6]}
 // Where each player's uuid acts as the key for an array of their card play numbers
+/*
 function addCardDraw(cardNumber, playerId) {
     logger.info("addCardDraw " + cardNumber + " to player " + playerId);
 
@@ -415,9 +507,12 @@ function addCardDraw(cardNumber, playerId) {
     }
     logger.info(cardPlays);
     return true;
-}
+}*/
 
 // A simple tick loop example
+
+
+//TODO: could use something like this to run timer on server?
 async function tickLoop() {
     // const elapsedTime = getTimeInS() - startTime;
     // logger.info("Tick... " + elapsedTime + " activePlayers: " + activePlayers);
@@ -426,7 +521,7 @@ async function tickLoop() {
 
         // If we had 2 players that are no longer active, end game.
         // You can add a minimum elapsed time check here if you'd like
-        if (playersInfo.length == 2 && activePlayers == 0) { // && (elapsedTime > minimumElapsedTime)) {
+        if (players.length == 2 && activePlayers == 0) { // && (elapsedTime > minimumElapsedTime)) {
             logger.info("All players disconnected. Ending game");
 
             gameoverCleanup();

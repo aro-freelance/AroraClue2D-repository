@@ -114,24 +114,38 @@ public class GameManager : MonoBehaviour
     private bool _resumeGameAfterGuessEvent = false;
 
 
-    // GameLift server opcodes 
-    // An opcode defined by client and your server script that represents a custom message type
-    //TODO: these are not being used at the moment. remove?
+    //messages server sends
     public const int OP_CODE_PLAYER_ACCEPTED = 113;
+    public const int OP_CODE_DISCONNECT_NOTIFICATION = 114;
+
+    public const int OP_REQUEST_FIND_MATCH_S = 1;
+    public const int OP_FIRE_MATCH_S = 2;
+    public const int OP_PREP_GAME_S = 3;
+    public const int OP_RESUME_GAME_S = 4;
+    public const int OP_GAMEOVER_S = 5;
+    public const int OP_START_GAME_S = 6;
+    public const int OP_START_GUESS_EVENT_S = 7;
+    public const int OP_START_COUNTDOWN_S = 8;
+    public const int OP_END_GUESS_EVENT_S = 9;
+    public const int OP_SET_PLAYER_INFO_S = 10;
+    public const int OP_CHECK_ANSWERS_S = 11;
+    public const int OP_PLAYER_MOVEMENT_S = 12;
 
 
-    //these are being used
-    public const int CHECK_ANSWERS = 305;
-    public const int PLAYER_MOVEMENT = 900;
-    public const int PLAYER_MOVEMENT_RECEIVED = 901;
+    //messages player sends
 
-    public const int GET_HOST = 199;
-    public const int START_GAME = 201;
-    public const int START_GUESS_EVENT = 202;
-    public const int START_COUNTDOWN = 901;
-    public const int END_GUESS_EVENT = 203;
-    public const int RESUME_GAME = 204;
-    public const int GAMEOVER = 209;
+    public const int OP_REQUEST_FIND_MATCH = 501;
+    public const int OP_FIRE_MATCH = 502;
+    public const int OP_PREP_GAME = 503;
+    public const int OP_RESUME_GAME = 504;
+    public const int OP_GAMEOVER = 505;
+    public const int OP_START_GAME = 506;
+    public const int OP_START_GUESS_EVENT = 507;
+    public const int OP_START_COUNTDOWN = 508;
+    public const int OP_END_GUESS_EVENT = 509;
+    public const int OP_SET_PLAYER_INFO = 510;
+    public const int OP_CHECK_ANSWERS = 511;
+    public const int OP_PLAYER_MOVEMENT = 512;
 
     // Lambda opcodes
     private const string REQUEST_FIND_MATCH_OP = "1";
@@ -455,12 +469,12 @@ public class GameManager : MonoBehaviour
 
 
 
-    async void SendMovement(float x, float y, float z)
+    private void SendMovement(float x, float y, float z)
     {
 
         Debug.Log("pos : " + x + "," + y + "," + z);
 
-        PlayerMovementData playerMovementData = new PlayerMovementData("900", x, y, z, _playerId);
+        PlayerMovementData playerMovementData = new PlayerMovementData(x, y, z, _playerId);
 
         string jsonData = JsonUtility.ToJson(playerMovementData);
 
@@ -468,18 +482,26 @@ public class GameManager : MonoBehaviour
         lastSentY = y;
         lastSentZ = z;
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
-
-        //TODO: use response to set the position of player by id
-        //example using gameSession
-        //GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
-
-        //example get player 2 game object. move it to position x , y , z with the data obtained from server.
+        RealtimePayload realtimePayload = new RealtimePayload(jsonData);
 
 
-        PlayerMovementData responseData = JsonConvert.DeserializeObject<PlayerMovementData>(response);
+        _realTimeClient.SendMessage(OP_PLAYER_MOVEMENT, realtimePayload);
 
-        Debug.Log("reponse movement data x = " + responseData.playerXPosition);
+
+
+
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+
+        ////TODO: use response to set the position of player by id
+        ////example using gameSession
+        ////GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
+
+        ////example get player 2 game object. move it to position x , y , z with the data obtained from server.
+
+
+        //PlayerMovementData responseData = JsonConvert.DeserializeObject<PlayerMovementData>(response);
+
+        //Debug.Log("reponse movement data x = " + responseData.playerXPosition);
 
 
         //TODO: get the player id that sent the data and move them to that pos 
@@ -1384,6 +1406,8 @@ public class ConnectMessage
     }
 }
 
+
+//TODO: update this and use it to prep game
 [System.Serializable]
 public class StartMatch
 {
@@ -1440,7 +1464,7 @@ public class RealtimePayload
 [Serializable]
 public class PlayerMovementData
 {
-    public string opCode;
+    //public string opCode;
     public float playerXPosition;
     public float playerYPosition;
     public float playerZPosition;
@@ -1449,9 +1473,8 @@ public class PlayerMovementData
 
     public PlayerMovementData() { }
 
-    public PlayerMovementData(string opCode, float playerXPosition, float playerYPosition, float playerZPosition, string playerId)
+    public PlayerMovementData(float playerXPosition, float playerYPosition, float playerZPosition, string playerId)
     {
-        this.opCode = opCode;
         this.playerXPosition = playerXPosition;
         this.playerYPosition = playerYPosition;
         this.playerZPosition = playerZPosition;
