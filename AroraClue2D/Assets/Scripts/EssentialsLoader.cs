@@ -8,7 +8,7 @@ public class EssentialsLoader : MonoBehaviour
     public GameObject UIScreen;
     public GameObject player;
     public GameObject gameManager;
-    public GameObject serverManager;
+    //public GameObject serverManager;
 
     public static EssentialsLoader instance;
 
@@ -32,7 +32,10 @@ public class EssentialsLoader : MonoBehaviour
             Instantiate(gameManager);
         }
 
-      
+        //if (ServerManager.instance = null)
+        //{
+        //    Instantiate(serverManager);
+        //}
 
 
 

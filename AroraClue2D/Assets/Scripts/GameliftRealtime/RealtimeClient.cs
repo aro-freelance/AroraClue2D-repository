@@ -5,12 +5,6 @@ using Aws.GameLift.Realtime;
 using Aws.GameLift.Realtime.Event;
 using Aws.GameLift.Realtime.Types;
 using Newtonsoft.Json;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Antlr3.Runtime;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Collections;
-using Aws.GameLift.Realtime.Network;
 
 /**
  * @BatteryAcid
@@ -132,6 +126,14 @@ public class RealTimeClient
         // handle message based on OpCode
         switch (data.OpCode)
         {
+            case 200:
+                //TODO: use this to establish connection to the game session after it is created
+
+                Debug.Log("opcode 200. hello from the server " + dataString);
+
+                break;
+
+
             case GameManager.OP_CODE_PLAYER_ACCEPTED:
 
                 //TODO: this is not in use. remove?
@@ -360,6 +362,7 @@ public class RealTimeClient
             .WithTargetPlayer(Constants.PLAYER_ID_SERVER)
             .WithPayload(StringToBytes(payload)));
     }
+
 
     /**
      * Handle connection open events

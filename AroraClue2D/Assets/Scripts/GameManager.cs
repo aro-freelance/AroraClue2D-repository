@@ -1012,7 +1012,7 @@ public class GameManager : MonoBehaviour
         string name = LaunchMenu.instance.nameInputText.text;
         string spriteName = LaunchMenu.instance.selectedSpriteName;
 
-        FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId, name, spriteName);
+        FindMatch matchMessage = new FindMatch(REQUEST_FIND_MATCH_OP, _playerId);
         string jsonPostData = JsonUtility.ToJson(matchMessage);
 
 
@@ -1061,6 +1061,50 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
         }
+
+        PlayerSessionObject playerSessionObject = JsonConvert.DeserializeObject<PlayerSessionObject>(response);
+
+        if (playerSessionObject != null)
+        {
+
+
+            // GameSessionPlacementInfo is a model used to handle both game session placement and game session search results from the Lambda response.
+            if (playerSessionObject.PlayerSessionId != null)
+            {
+                // The response was from a placement request
+                Debug.Log("Game session placement request submitted.");
+
+                // Debug.Log(gameSessionPlacementInfo.PlacementId);
+
+                // subscribe to receive the player placement fulfillment notification
+                await SubscribeToFulfillmentNotifications(playerSessionObject.PlayerSessionId);
+
+            }
+            else if (playerSessionObject.GameSessionId != null)
+            {
+                // The response was for a found game session which also contains info for created player session
+                Debug.Log("Game session found!");
+                // Debug.Log(gameSessionPlacementInfo.GameSessionId);
+
+                Int32.TryParse(playerSessionObject.Port, out int portAsInt);
+
+
+
+                // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
+                // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
+                EstablishConnectionToRealtimeServer(playerSessionObject.IpAddress, portAsInt, playerSessionObject.PlayerSessionId);
+            }
+            else
+            {
+                Debug.Log("playersessionobject not valid...");
+            }
+        }
+        else
+        {
+            Debug.Log("Error: player session objet is NULL");
+        }
+
+
 
         //_findMatchButton.gameObject.SetActive(false); // remove from UI
     }
@@ -1257,12 +1301,13 @@ public class GameManager : MonoBehaviour
         _updateRemotePlayerId = true;
     }
 
-    //void OnGameOverEvent(object sender, GameOverEventArgs gameOverEventArgs)
-    //{
-    //    Debug.Log($"Game over event received with winner: {gameOverEventArgs.matchResults.winnerId}.");
-    //    this._matchResults = gameOverEventArgs.matchResults;
-    //    this._gameOver = true;
-    //}
+
+    void OnGameOverEvent(object sender, GameOverEventArgs gameOverEventArgs)
+    {
+        //Debug.Log($"Game over event received with winner: {gameOverEventArgs.matchResults.winnerId}.");
+        //this._matchResults = gameOverEventArgs.matchResults;
+        //this._gameOver = true;
+    }
 
 
 
@@ -1306,16 +1351,11 @@ public class FindMatch
 {
     public string opCode;
     public string playerId;
-    public string playerName;
-    public string spriteName;
-
     public FindMatch() { }
-    public FindMatch(string opCodeIn, string playerIdIn, string playerName, string spriteName)
+    public FindMatch(string opCodeIn, string playerIdIn)
     {
         this.opCode = opCodeIn;
         this.playerId = playerIdIn;
-        this.playerName = playerName;
-        this.spriteName = spriteName;
     }
 }
 
@@ -1490,5 +1530,18 @@ public class NewGameData
 
 }
 
+// This data structure is returned by the client service when a game match is found
+[System.Serializable]
+public class PlayerSessionObject
+{
+    public string PlayerSessionId;
+    public string PlayerId;
+    public string GameSessionId;
+    public string FleetId;
+    public string CreationTime;
+    public string Status;
+    public string IpAddress;
+    public string Port;
+}
 
 
