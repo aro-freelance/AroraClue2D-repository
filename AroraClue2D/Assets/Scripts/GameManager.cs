@@ -8,6 +8,8 @@ using Aws.GameLift.Realtime.Types;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
+using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 
 public class GameManager : MonoBehaviour
 {
@@ -171,8 +173,8 @@ public class GameManager : MonoBehaviour
         _playerId = System.Guid.NewGuid().ToString();
 
 
-        
-        
+
+
     }
 
 
@@ -1031,6 +1033,11 @@ public class GameManager : MonoBehaviour
         Debug.Log("Find match pressed");
         _findingMatch = true;
 
+        //show UI to let player know something is loading
+        LoadingMatchUI(true);
+
+
+        //TODO: also send name and sprite name as part of find match object and then also add them to the playerseesionobject received
         string name = LaunchMenu.instance.nameInputText.text;
         string spriteName = LaunchMenu.instance.selectedSpriteName;
 
@@ -1042,8 +1049,8 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("response: " + response);
 
-        GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
-
+        //GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
+        /*
         if (gameSessionPlacementInfo != null)
         {
 
@@ -1082,44 +1089,21 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
-        }
+        } */
 
         PlayerSessionObject playerSessionObject = JsonConvert.DeserializeObject<PlayerSessionObject>(response);
 
         if (playerSessionObject != null)
         {
 
+            //int port = Int32.Parse(playerSessionObject.Port);
 
-            // GameSessionPlacementInfo is a model used to handle both game session placement and game session search results from the Lambda response.
-            if (playerSessionObject.PlayerSessionId != null)
-            {
-                // The response was from a placement request
-                Debug.Log("Game session placement request submitted.");
+            //playerSessionObject.IpAddress, port, playerSessionObject.PlayerSessionId
 
-                // Debug.Log(gameSessionPlacementInfo.PlacementId);
-
-                // subscribe to receive the player placement fulfillment notification
-                await SubscribeToFulfillmentNotifications(playerSessionObject.PlayerSessionId);
-
-            }
-            else if (playerSessionObject.GameSessionId != null)
-            {
-                // The response was for a found game session which also contains info for created player session
-                Debug.Log("Game session found!");
-                // Debug.Log(gameSessionPlacementInfo.GameSessionId);
-
-                Int32.TryParse(playerSessionObject.Port, out int portAsInt);
+            EstablishConnectionToRealtimeServer(playerSessionObject);
 
 
-
-                // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
-                // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
-                EstablishConnectionToRealtimeServer(playerSessionObject.IpAddress, portAsInt, playerSessionObject.PlayerSessionId);
-            }
-            else
-            {
-                Debug.Log("playersessionobject not valid...");
-            }
+            //TODO: if this doesn't work go grab this (and subscribe) from the batteryacid project... i changed it too much to keep it
         }
         else
         {
@@ -1135,40 +1119,47 @@ public class GameManager : MonoBehaviour
     //TODO: @HERE this function is still giving a URI issue. It is trying to start a game session and then failing to with a uri error
     // afterwards if i try to connect the session has been created but this player didn't ever get notified and connect to it...
     // could still be onDataReceived or could be that the url is wrong. trouble shoot and fix.
-    private async Task<bool> SubscribeToFulfillmentNotifications(string placementId)
+    //private async Task<bool> SubscribeToFulfillmentNotifications(PlayerSessionObject playerSessionObject)
+    //{
+    //    Debug.Log("GM: subscribe to fullfillment");
+
+        
+    //    /*
+    //    PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(playerSessionObject);
+
+    //    //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
+    //    LoadingMatchUI(false);
+
+    //    if (playerPlacementFulfillmentInfo != null)
+    //    {
+    //        Debug.Log("Player placement was fulfilled...");
+    //        // Debug.Log("Placed Player Sessions count: " + playerPlacementFulfillmentInfo.placedPlayerSessions.Count);
+
+    //        // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
+    //        // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
+    //        EstablishConnectionToRealtimeServer(playerPlacementFulfillmentInfo.ipAddress, playerPlacementFulfillmentInfo.port,
+    //            playerPlacementFulfillmentInfo.placedPlayerSessions[0].playerSessionId);
+
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        Debug.Log("Player placement was null, something went wrong...");
+    //        return false;
+    //    }*/
+    //}
+
+    private void EstablishConnectionToRealtimeServer(PlayerSessionObject playerSessionObject)
     {
-        Debug.Log("subscribe to fullfillment");
+        Debug.Log("establish connection to server method called");
 
-        //show UI to let player know something is loading
-        LoadingMatchUI(true);
-
-        PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(placementId);
-
-        //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
-        LoadingMatchUI(false);
-
-        if (playerPlacementFulfillmentInfo != null)
-        {
-            Debug.Log("Player placement was fulfilled...");
-            // Debug.Log("Placed Player Sessions count: " + playerPlacementFulfillmentInfo.placedPlayerSessions.Count);
-
-            // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
-            // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
-            EstablishConnectionToRealtimeServer(playerPlacementFulfillmentInfo.ipAddress, playerPlacementFulfillmentInfo.port,
-                playerPlacementFulfillmentInfo.placedPlayerSessions[0].playerSessionId);
-
-            return true;
-        }
-        else
-        {
-            Debug.Log("Player placement was null, something went wrong...");
-            return false;
-        }
-    }
-
-    private void EstablishConnectionToRealtimeServer(string ipAddress, int port, string playerSessionId)
-    {
         int localUdpPort = GetAvailableUdpPort();
+
+        var ipAddress = playerSessionObject.IpAddress;
+        var playerSessionId = playerSessionObject.PlayerSessionId;
+        var port = Int32.Parse(playerSessionObject.Port);
+        _playerId = playerSessionObject.PlayerId;
+
 
         RealtimePayload realtimePayload = new RealtimePayload(_playerId);
         string payload = JsonUtility.ToJson(realtimePayload);
@@ -1194,10 +1185,16 @@ public class GameManager : MonoBehaviour
 
             Debug.Log("realtimeclient: " + _realTimeClient);
 
-            CheckIfHost();
+
+            //TODO: @YELSA implement this method with server calls that work... to the server not the lambda?
+            /// note that at this point the player is connecting but reserved... they are then timing out after 1 minute. fix this issue
+            //CheckIfHost();
+
+            
 
             //we should turn this on... but it will not run until ready to true.. therefore we can
             //add a ready make sure that all the players have joined? before we fire this off in Update.
+            
             _prepGame = true;
 
         }

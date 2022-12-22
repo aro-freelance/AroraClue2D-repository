@@ -52,69 +52,78 @@ public class SQSMessageProcessing : MonoBehaviour
     }
 
 
+    
+
+    //public async Task<PlayerPlacementFulfillmentInfo> SubscribeToFulfillmentNotifications(PlayerSessionObject playerSessionObject)
+    //{
+
+    //    //TODO: use playersessionobject in this function to connect to server and get a fullfillment
+    //    /*
+    //     * public string ipAddress;
+    //public int port;
+    //public string placementId;
+    //public string gameSessionId;
+    //public List<GameliftFulfillmentPlacedPlayerSession> placedPlayerSessions;
+         
+    //     */
+    //    Debug.Log("SQS: SubscribeToFulfillmentNotifications...");
+
+    //    _fulfillmentFailsafeCoroutine = StartCoroutine(FailsafeTimer());
+    //    PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = null;
+
+    //    do
+    //    {
+    //        //Debug.Log("client : " + _sqsClient);
+    //        //Debug.Log("sqsurl : " + SQSURL);
+
+    //        //var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
+
+    //        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest
+    //        {
+    //            QueueUrl = PrivateConsts.instance.SQSURL,
+    //            MaxNumberOfMessages = MaxMessages,
+    //            WaitTimeSeconds = WaitTime
+    //        };
 
 
-    public async Task<PlayerPlacementFulfillmentInfo> SubscribeToFulfillmentNotifications(string placementId)
-    {
-        Debug.Log("SubscribeToFulfillmentNotifications...");
+    //        Debug.Log("ping");
 
-        _fulfillmentFailsafeCoroutine = StartCoroutine(FailsafeTimer());
-        PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = null;
+    //        ReceiveMessageResponse msg = await _sqsClient.ReceiveMessageAsync(receiveMessageRequest); //error here
 
-        do
-        {
-            //Debug.Log("client : " + _sqsClient);
-            //Debug.Log("sqsurl : " + SQSURL);
+    //        if(msg != null)
+    //        {
+    //            Debug.Log("SubscribeToFulfillmentNotifications received message...");
 
-            //var msg = await GetMessage(_sqsClient, SQSURL, WaitTime);
+    //            playerPlacementFulfillmentInfo = ConvertMessage(msg.Messages[0].Body);
 
-            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest
-            {
-                QueueUrl = SQSURL,
-                MaxNumberOfMessages = MaxMessages,
-                WaitTimeSeconds = WaitTime
-            };
+    //            // make sure this notification was for our player
+    //            if (playerPlacementFulfillmentInfo != null && playerPlacementFulfillmentInfo.placementId == placementId)
+    //            {
+    //                Debug.Log("Placement fulfilled, break loop...");
+    //                _fulfillmentMessageReceived = true; // break loop
 
-            Debug.Log("ping");
+    //                // Delete consumed message as it is no longer necessary to leave it in the queue.
+    //                await DeleteMessage(_sqsClient, msg.Messages[0], SQSURL);
 
-            ReceiveMessageResponse msg = await _sqsClient.ReceiveMessageAsync(receiveMessageRequest); //error here
+    //                if (_fulfillmentFailsafeCoroutine != null)
+    //                {
+    //                    // kill failsafe coroutine
+    //                    StopCoroutine(_fulfillmentFailsafeCoroutine);
+    //                }
+    //            }
 
-            Debug.Log("msg count " + msg.Messages.Count);
+    //            // we don't break loop here because the message received wasn't for this player
+    //        }
+    //        else
+    //        {
+    //            _fulfillmentMessageReceived = true;
+    //            Debug.Log("no messages");
+    //        }
 
-            if (msg.Messages.Count != 0)
-            {
-                Debug.Log("SubscribeToFulfillmentNotifications received message...");
+    //    } while (!_fulfillmentMessageReceived);
 
-                playerPlacementFulfillmentInfo = ConvertMessage(msg.Messages[0].Body);
-
-                // make sure this notification was for our player
-                if (playerPlacementFulfillmentInfo != null && playerPlacementFulfillmentInfo.placementId == placementId)
-                {
-                    Debug.Log("Placement fulfilled, break loop...");
-                    _fulfillmentMessageReceived = true; // break loop
-
-                    // Delete consumed message as it is no longer necessary to leave it in the queue.
-                    await DeleteMessage(_sqsClient, msg.Messages[0], SQSURL);
-
-                    if (_fulfillmentFailsafeCoroutine != null)
-                    {
-                        // kill failsafe coroutine
-                        StopCoroutine(_fulfillmentFailsafeCoroutine);
-                    }
-                }
-
-                // we don't break loop here because the message received wasn't for this player
-            }
-            else
-            {
-                _fulfillmentMessageReceived = true;
-                Debug.Log("no messages");
-            }
-
-        } while (!_fulfillmentMessageReceived);
-
-        return playerPlacementFulfillmentInfo;
-    }
+    //    return playerPlacementFulfillmentInfo;
+    //} 
 
     private static PlayerPlacementFulfillmentInfo ConvertMessage(string convertMessage)
     {

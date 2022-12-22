@@ -126,6 +126,13 @@ public class RealTimeClient
         // handle message based on OpCode the server sent
         switch (data.OpCode)
         {
+
+            case Constants.PLAYER_CONNECT_OP_CODE:
+
+                Debug.Log("on data received player connect op code");
+
+                break;
+
             case 200:
                 //TODO: use this to establish connection to the game session after it is created
 

@@ -1,6 +1,6 @@
 ﻿// Based on source: https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script.html
 
-//ARORA 0.0.7
+//ARORA 0.0.9
 
 //this handles player interactions on the server.  
 
@@ -21,8 +21,7 @@ const tickTime = 1000;
 const minimumElapsedTime = 30; //120;
 
 var session; // The Realtime server session object
-let sessionTimeoutTimer = null;
-const SESSION_TIMEOUT = 1 * 60 & 1000; // mins to wait * secs/min * milliseconds/second ....  1 minute
+
 
 var logger; // Log at appropriate level via .info(), .warn(), .error(), .debug()
 
@@ -134,16 +133,7 @@ function onProcessStarted(args) {
     return true;
 }
 
-// Called when a new game session is started on the process
-function onStartGameSession(gameSession) {
-    logger.info("onStartGameSession: ");
-    logger.info(gameSession);
-    // Complete any game session set-up
 
-    // Set up an example tick loop to perform server initiated actions
-    //startTime = getTimeInS();
-    //tickLoop();
-}
 
 // Handle process termination if the process is being terminated by GameLift
 // You do not need to call ProcessEnding here
@@ -248,7 +238,7 @@ function onPlayerAccepted(player) {
                     
                     
                     //TODO: start the prep phase if we have enough players
-                    const startMatchMessage = session.newTextGameMessage(OP_PREP_GAME, session.getServerId(), JSON.stringify(gameStartPayload));
+                    const startMatchMessage = session.newTextGameMessage(OP_PREP_GAME_S, session.getServerId(), JSON.stringify(gameStartPayload));
                     session.sendReliableMessage(startMatchMessage, playerSession.peerId);
                 }
             });
@@ -308,10 +298,9 @@ function onMessage(gameMessage) {
                     playerId: payload.playerId
                 };
                 
-                const movementMSG = session.newTextGameMessage(
-                    OP_PLAYER_MOVEMENT_S, session.getServerId(), JSON.stringify(movementData));
+                const movementMSG = session.newTextGameMessage(OP_PLAYER_MOVEMENT_S, session.getServerId(), JSON.stringify(movementData));
 
-                    for (let index = 0; index < allPlayersLength; ++index) {
+                for (let index = 0; index < allPlayersLength; ++index) {
 
                     logger.info("Sending movement data to player " + players[index].peerId);
 
@@ -378,14 +367,15 @@ function onMessage(gameMessage) {
                 break;
             }
 
-       
+       /*
             //leave this here for now as an example PLAYCARDOP removed so i hardcoded a number for example (unused)
              case 800:
             {
                 logger.info("PLAY_CARD_OP hit");
 
                 const cardDrawn = randomIntFromInterval(1, 10);
-                var cardDrawnSuccess = addCardDraw(cardDrawn, payload.playerId);
+                var cardDrawnSuccess = true;
+                //addCardDraw(cardDrawn, payload.playerId);
 
                 if (cardDrawnSuccess) {
 
@@ -393,11 +383,13 @@ function onMessage(gameMessage) {
                     let cardDrawData = {
                         card: cardDrawn,
                         playedBy: payload.playerId,
-                        plays: cardPlays[payload.playerId].length
+                        plays: 1
                     };
+
+                    //plays: cardPlays[payload.playerId].length
                     logger.info(cardDrawData);
 
-                    const cardDrawMsg = session.newTextGameMessage(DRAW_CARD_ACK_OP, session.getServerId(), JSON.stringify(cardDrawData));
+                    const cardDrawMsg = session.newTextGameMessage(800, session.getServerId(), JSON.stringify(cardDrawData));
 
                     for (let index = 0; index < allPlayersLength; ++index) {
                         logger.info("Sending draw card message to player " + playersInfo[index].peerId);
@@ -413,7 +405,7 @@ function onMessage(gameMessage) {
                 }
 
                 break;
-            }
+            }*/
 
 
     }
@@ -423,12 +415,13 @@ function checkGameOver() {
 
     var gameCompletedPlayers = 0;
 
+    /*
     for (const [key, value] of Object.entries(cardPlays)) {
         // has player made two plays
         if (value.length == 2) {
             gameCompletedPlayers++;
         }
-    }
+    }*/
 
     logger.info(gameCompletedPlayers);
 
@@ -454,6 +447,7 @@ function determineWinner() {
     }
 
     var playersExamined = 0;
+    /*
     for (const [key, value] of Object.entries(cardPlays)) {
         // make sure we're only looking at players with two plays
         if (value.length == 2) {
@@ -475,6 +469,7 @@ function determineWinner() {
     } else if (result.playerOneScore == result.playerTwoScore) {
         result.winnerId = "tie";
     }
+    */
 
     logger.info(result);
 
@@ -509,8 +504,22 @@ function addCardDraw(cardNumber, playerId) {
     return true;
 }*/
 
-// A simple tick loop example
 
+
+// Called when a new game session is started on the process
+function onStartGameSession(gameSession) {
+    logger.info("onStartGameSession: ");
+    logger.info(gameSession);
+    // Complete any game session set-up
+
+    // Set up an example tick loop to perform server initiated actions
+    startTime = getTimeInS();
+    tickLoop();
+}
+
+
+
+// A simple tick loop example
 
 //TODO: could use something like this to run timer on server?
 async function tickLoop() {
@@ -587,6 +596,9 @@ function getTimeInS() {
     return Math.round(new Date().getTime() / 1000);
 }
 
+
+
+
 exports.ssExports = {
     configuration: configuration,
     init: init,
@@ -599,7 +611,7 @@ exports.ssExports = {
     onSendToGroup: onSendToGroup,
     onPlayerJoinGroup: onPlayerJoinGroup,
     onPlayerLeaveGroup: onPlayerLeaveGroup,
-    onStartGameSession: onStartGameSession,
     onProcessTerminate: onProcessTerminate,
-    onHealthCheck: onHealthCheck
+    onHealthCheck: onHealthCheck,
+    onStartGameSession: onStartGameSession
 };
