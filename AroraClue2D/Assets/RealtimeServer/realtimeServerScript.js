@@ -1,6 +1,6 @@
 ﻿// Based on source: https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script.html
 
-//ARORA 0.0.9
+//ARORA 0.0.904
 
 //this handles player interactions on the server.  
 
@@ -65,29 +65,19 @@ const OP_PLAYER_MOVEMENT = 512;
 
 
 let players = [];
-let logicalPlayerIDs = {};
+let playerDataList = [];
 
-
+//the game will start after there are this many active players connected
+let numberOfPlayersDesiredToFireMatch = 2;
 
 
 let serverConnected = false;
 
-let timeForStart = false;
-let timeForGuessEvent = false;
-let timeForResume = false;
-
 let weapon = null;
 let suspect = null;
 let location = null;
-let guessedOnTime = null;
-
-let hintWeapon = null;
-let hintSuspect = null;
-let hintLocation = null;
 
 
-let host = null;
-let winner = null;
 let gameover = false;
 
 
@@ -149,6 +139,7 @@ function onHealthCheck() {
 // On Player Connect is called when a player has passed initial validation
 // Return true if player should connect, false to reject
 // This is hit before onPlayerAccepted
+//@Yelsa Step 4
 function onPlayerConnect(connectMsg) {
     logger.info("onPlayerConnect: ");
     logger.info(connectMsg);
@@ -162,21 +153,31 @@ function onPlayerConnect(connectMsg) {
         peerId: connectMsg.player.peerId,
         playerId: payload.playerId,
         playerSessionId: connectMsg.player.playerSessionId,
-        accepted: false,
-        active: false
+        accepted: true,
+        active: true
     };
     logger.info(playerConnected);
 
+    //do this in onPlayerAccepted where we already have a player object
     players.push(playerConnected);
+
+    let numberOfPlayers = players.length.toString;
+
+    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, connectMsg.player.peerId, numberOfPlayers);
+    session.sendReliableMessage(msg, connectMsg.player.peerId);
+
 
     // Perform any validation needed for connectMsg.payload, connectMsg.peerId
     return true;
 }
 
 // Called when a Player is accepted into the game
+//@Yelsa Step 5b
 function onPlayerAccepted(player) {
     logger.info("onPlayerAccepted");
     logger.info(player);
+
+    players.push(player)
 
     players.forEach((playerInfo) => {
         logger.info("onPlayerAccepted players checking peerId");
@@ -193,57 +194,68 @@ function onPlayerAccepted(player) {
     // This player was accepted -- let's send them a message
     const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, player.peerId, "Peer " + player.peerId + " accepted");
     session.sendReliableMessage(msg, player.peerId);
-
-    //make the first player the host
-    if (host == null) {
-        host = player.peerId;
-    }
-
+    
     activePlayers++;
+
+    //@Yelsa TODO: get the actual name and sprite name data in this by sending it to the server when the player client is made
+    //make a PlayerData object for each player and add it to the list playerDataList
+    var playerData = {
+
+        PlayerName: "playerName",
+        PlayerSpriteName: "playerA",
+        PlayerNumber: activePlayers.length,
+        PlayerId: player.peerId,
+        ReadyToStart: false,
+        ReadyToResume: false
+
+    };
+
+    playerDataList.push(playerData);
 
     logger.info("onPlayerAccepted checking active player count");
 
-    // This would have to adjusted to handle games where players can come and go within a single match.
-    // NOTE: ActivePlayers stores active connections. If you need to test from only one computer, like you
-    // can only play one side of the match at a time, then you'll have to make this condition check if playerInfo.length > 1 instead.
-    //TODO: i changed this to >= from > for testing...
-    if (activePlayers > 1) {
+    //@Yelsa if we are having problems we may need to make the host prep message async?
+    //if there are enough active players and the server has received a message with random data from host to prep the game
+    if (activePlayers == numberOfPlayersDesiredToFireMatch) {
+        if (selectedWeapon != null && selectedSuspect != && selectedPlace != null) {
 
-        serverConnected = true;
+            serverConnected = true;
 
-        logger.info("onPlayerAccepted activePlayers > 1");
+            logger.info("onPlayerAccepted activePlayers > 1");
 
-        // getPlayers returns "a list of peer IDs for players that are currently connected to the game session"
-        // So, let's match these players to the ones stored in players
-        session.getPlayers().forEach((playerSession, playerId) => {
+            // getPlayers returns "a list of peer IDs for players that are currently connected to the game session"
+            // So, let's match these players to the ones stored in players
+            session.getPlayers().forEach((playerSession, playerId) => {
 
-            logger.info("onPlayerAccepted players loop");
-            logger.info(playerSession);
-            logger.info(playerId);
+                logger.info("onPlayerAccepted players loop 5b");
+                logger.info(playerSession);
+                logger.info(playerId);
 
-            players.forEach((playerInfo) => {
-                logger.info("onPlayerAccepted players playerInfo loop");
-                logger.info("playerInfo.peerId: " + playerInfo.peerId + ", playerSession.peerId: " + playerSession.peerId + ", playerInfo.active: " + playerInfo.active);
+                players.forEach((playerInfo) => {
+                    logger.info("onPlayerAccepted players playerInfo loop");
+                    logger.info("playerInfo.peerId: " + playerInfo.peerId + ", playerSession.peerId: " + playerSession.peerId + ", playerInfo.active: " + playerInfo.active);
 
-                // find the other active player
-                if (playerInfo.peerId != playerSession.peerId) {
+                    //make a GamePrepData object to send the player
                     var gameStartPayload = {
-                        remotePlayerId: playerInfo.playerId
+                        playerDataList: playerDataList,
+                        selectedWeapon: selectedWeapon,
+                        selectedSuspect: selectedSuspect,
+                        selectedPlace: selectedPlace
                     };
 
-                    logger.info("Sending start match message...");
+                    logger.info("Sending prep match message...");
                     logger.info(gameStartPayload);
 
                     // send out the match has started along with the opponent's playerId
-                    
-                    
-                    //TODO: start the prep phase if we have enough players
+
+                    //@Yelsa Step 5b message sent here
+                    //start the prep phase if we have enough players
                     const startMatchMessage = session.newTextGameMessage(OP_PREP_GAME_S, session.getServerId(), JSON.stringify(gameStartPayload));
                     session.sendReliableMessage(startMatchMessage, playerSession.peerId);
-                }
-            });
-        });
 
+                });
+            });
+        }
     }
 
 }
@@ -285,38 +297,75 @@ function onMessage(gameMessage) {
 
     switch (gameMessage.opCode) {
 
-    //connect
-        case 1:
 
-        //todo if this is called then update it with initial connect stuff
-        //OTHERWISE REMOVE THIS BLOCK
+        //@Yelsa Step 5A
+        case OP_PREP_GAME:
 
-        let movementData = {
-                    playerXPosition: 15,
-                    playerYPosition: 15,
-                    playerZPosition: 15,
-                    playerId: payload.playerId
-                };
-                
-                const movementMSG = session.newTextGameMessage(OP_PLAYER_MOVEMENT_S, session.getServerId(), JSON.stringify(movementData));
+            //server receives random data from host
 
-                for (let index = 0; index < allPlayersLength; ++index) {
+            weapon = payload.selectedWeapon;
 
-                    logger.info("Sending movement data to player " + players[index].peerId);
+            suspect = payload.selectedSuspect;
 
-                    session.sendReliableMessage(movementMSG, player[index].peerId);
+            location = payload.selectedPlace;
 
+
+            break;
+
+        //@Yelsa Step 7
+        case OP_START_GAME:
+
+            var allReady = true;
+
+            //look for the player who sent the message in the playerDataList by id,
+            //then set them ready to start
+            // then check if anyone in the list is not ready to start, if so end,  if all are ready send start game msg
+            playerDataList.forEach((player) => {
+                if (player.playerId == payload.playerId) {
+                    player.ReadyToStart = true;
                 }
+                if (player.ReadyToStart == false) {
+                    allReady = false;
+                }
+            });
+
+            //if all players are ready send a message telling them to start the game
+            if (allReady) {
+
+                const readyMessage = session.newTextGameMessage(OP_START_GAME_S, session.getServerId(), "All Ready. Start Game.");
+                session.getPlayers().forEach((player, playerId) => {
+                    if (playerId != peerId) {
+                        session.sendReliableMessage(readyMessage, peerId);
+                    }
+                });
+
+            }
+
+            break;
+
+        //@Yelsa Step 10
+        case OP_START_GUESS_EVENT:
+
+            //TODO:
+
+            break;
 
 
-                //TODO: remove
-                //this is for testing... just one message and then ending
-                logger.info("ENDING BECAUSE YOU PUT A TEST END HERE. Completed process ending with: " + outcome);
-                
-                gameoverCleanup();
-                
-                break;
-       
+        //@Yelsa Step 13
+        case OP_CHECK_ANSWERS:
+
+            //TODO:
+
+            break;
+
+        //@Yelsa Step 15
+        case OP_RESUME_GAME:
+
+            //TODO:
+
+            break;
+
+        //@Yelsa Step 17
         case OP_PLAYER_MOVEMENT:
             {
                 //when the server receives movement data from the player 
@@ -339,8 +388,6 @@ function onMessage(gameMessage) {
 
                 //2. Then it make a message 
 
-                let allPlayersLength = players.length;
-
                 const movementMSG = session.newTextGameMessage(
                     OP_PLAYER_MOVEMENT_S, session.getServerId(), JSON.stringify(movementData));
 
@@ -349,7 +396,7 @@ function onMessage(gameMessage) {
                 //this sends a string, and we are sending an object... so use the other method for now?
                 //SendStringToClient(players, OP_PLAYER_MOVEMENT_S, movementMSG);
 
-                for (let index = 0; index < allPlayersLength; ++index) {
+                for (let index = 0; index < players.length; ++index) {
 
                     logger.info("Sending movement data to player " + players[index].peerId);
 
@@ -360,53 +407,12 @@ function onMessage(gameMessage) {
 
                 //TODO: remove
                 //this is for testing... just one message and then ending
-                logger.info("ENDING BECAUSE YOU PUT A TEST END HERE. Completed process ending with: " + outcome);
+                logger.info("ENDING BECAUSE YOU PUT A TEST END HERE. case movement");
                 
                 gameoverCleanup();
 
                 break;
             }
-
-       /*
-            //leave this here for now as an example PLAYCARDOP removed so i hardcoded a number for example (unused)
-             case 800:
-            {
-                logger.info("PLAY_CARD_OP hit");
-
-                const cardDrawn = randomIntFromInterval(1, 10);
-                var cardDrawnSuccess = true;
-                //addCardDraw(cardDrawn, payload.playerId);
-
-                if (cardDrawnSuccess) {
-
-                    let allPlayersLength = playersInfo.length;
-                    let cardDrawData = {
-                        card: cardDrawn,
-                        playedBy: payload.playerId,
-                        plays: 1
-                    };
-
-                    //plays: cardPlays[payload.playerId].length
-                    logger.info(cardDrawData);
-
-                    const cardDrawMsg = session.newTextGameMessage(800, session.getServerId(), JSON.stringify(cardDrawData));
-
-                    for (let index = 0; index < allPlayersLength; ++index) {
-                        logger.info("Sending draw card message to player " + playersInfo[index].peerId);
-                        session.sendReliableMessage(cardDrawMsg, playersInfo[index].peerId);
-                    }
-
-                    //if something needs to happen after this data is sent...
-                    checkGameOver();
-
-                } else {
-                    // ignore action as the player has already played max allowed cards
-                    logger.info("Player " + payload.playerId + " attempted extra card!");
-                }
-
-                break;
-            }*/
-
 
     }
 }
@@ -474,7 +480,7 @@ function determineWinner() {
     logger.info(result);
 
     // send out game over messages with winner
-    const gameoverMsg = session.newTextGameMessage(GAMEOVER_OP, session.getServerId(), JSON.stringify(result));
+    const gameoverMsg = session.newTextGameMessage(OP_GAMEOVER_S, session.getServerId(), JSON.stringify(result));
 
     for (let index = 0; index < players.length; ++index) {
         logger.info("Sending game over message to player " + players[index].peerId);

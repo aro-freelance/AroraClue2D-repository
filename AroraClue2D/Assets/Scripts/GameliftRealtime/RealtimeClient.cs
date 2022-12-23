@@ -53,13 +53,7 @@ public class RealTimeClient
 
     /// <summary>
     /// Initialize a client for GameLift Realtime and connects to a player session.
-    /// </summary>
-    /// <param name="endpoint">The endpoint for the GameLift Realtime server to connect to</param>
-    /// <param name="tcpPort">The TCP port for the GameLift Realtime server</param>
-    /// <param name="localUdpPort">Local Udp listen port to use</param>
-    /// <param name="playerSessionId">The player session Id in use - from CreatePlayerSession</param>
-    /// <param name="connectionPayload"></param>
-    /// 
+    /// </summary> 
     public RealTimeClient(string endpoint, int tcpPort, int localUdpPort, string playerSessionId, string connectionPayload, ConnectionType connectionType)
     {
         this.OnCloseReceived = false;
@@ -73,15 +67,7 @@ public class RealTimeClient
         };
 
 
-        //ConnectionToken token = new ConnectionToken(tokenUID, null);
-
-
-        Client = new Aws.GameLift.Realtime.Client(clientConfiguration);
-
-
-        // Create a Realtime client with the client configuration            
-       // Client = new Client(clientConfiguration);
-       // Client = new Aws.GameLift.Realtime.Client(clientConfiguration);
+        Client = new Client(clientConfiguration);
 
 
         Client.ConnectionOpen += new EventHandler(OnOpenEvent);
@@ -90,7 +76,8 @@ public class RealTimeClient
         Client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
         Client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
 
-        ConnectionToken token = new ConnectionToken(playerSessionId, null); //StringToBytes(connectionPayload));
+        //@Yelsa  the token had null as payload parameter which is likely what was preventing player from being accepted as ACTIVE. Check back here whether RESERVED player status is still an issue.
+        ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(connectionPayload)); 
         Client.Connect(endpoint, tcpPort, localUdpPort, token);
 
 
@@ -140,18 +127,38 @@ public class RealTimeClient
 
                 break;
 
-
+                //@Yelsa Step 4.5
             case GameManager.OP_CODE_PLAYER_ACCEPTED:
 
-                //TODO: this is not in use. remove?
 
                 // This tells our client that the player has been accepted into the Game Session as a new player session.
-                Debug.Log("Player accepted into game session!");
+                Debug.Log("op code: Player accepted into game session!");
 
-                // If you need to test and you don't have two computers, you can mark GameStarted true here to enable the Draw card button
-                // and comment it out in the GAME_START_OP case.
-                // This only works because game play is asynchronous and doesn't care if both players are active at the same time.
-                //GameStarted = true;
+                string numberOfPlayers = BytesToString(data.Data);
+
+                //tell player that they are accepted and waiting for match to start
+                GameManager.Instance.LoadingMatchUI(false);
+
+                //if the player is first to join, they are the host and they should prep the game
+                if(numberOfPlayers == "1")
+                {
+                    GameManager.Instance.HostPrepGame();
+                }
+
+
+                break;
+
+            case GameManager.OP_FIRE_MATCH_S:
+
+                Debug.Log("op code: call to fire match");
+
+                //TODO: get data from the call in the form of GamePrepData. contains weapon, suspect, place strings and a PlayerData[]
+                string jsonDataFromServer = BytesToString(data.Data);
+                //TODO: this should be set to the data from server
+                GamePrepData gamePrepData = JsonConvert.DeserializeObject<GamePrepData>(jsonDataFromServer);
+
+                GameManager.Instance.SetupAfterMatchFound(gamePrepData);
+
 
                 break;
 
@@ -167,6 +174,8 @@ public class RealTimeClient
 
                 break;
 
+            //TODO: I stopped here for christmas... code from here forward hasn't been checked, just labeled
+            //@Yelsa Step 8
             case GameManager.OP_START_GAME_S:
                 // The game start op tells our game clients that all players have joined and the game should start
                 Debug.Log("Start game op received...");
@@ -202,6 +211,8 @@ public class RealTimeClient
 
             //    break;
 
+
+            //@Yelsa Step 14b
             case GameManager.OP_GAMEOVER_S:
                 // gives us the match results
                 Debug.Log("Game over op...");
@@ -217,7 +228,7 @@ public class RealTimeClient
 
 
 
-
+            //@Yelsa Step 11
             case GameManager.OP_START_GUESS_EVENT_S:
 
                 Debug.Log("Start guess event data received");
@@ -226,8 +237,7 @@ public class RealTimeClient
 
                 break;
 
-
-
+            //@Yelsa Step 14a
             case GameManager.OP_END_GUESS_EVENT_S:
 
                 Debug.Log("end guess event data received");
@@ -235,17 +245,15 @@ public class RealTimeClient
 
                 break;
 
-            case GameManager.OP_CHECK_ANSWERS_S:
+            //@YELSA Step 16  (should be same as back to step 8)
+            case GameManager.OP_RESUME_GAME_S:
 
-                Debug.Log("Check answers op data received");
-
-                PlayerGuessData playerGuessData = JsonConvert.DeserializeObject<PlayerGuessData>(dataString);
-
-                OnPlayerGuess(playerGuessData);
+                //TODO:
 
                 break;
 
-
+            //Receive movement data from server for another player's location
+            //@Yelsa Step 18
             case GameManager.OP_PLAYER_MOVEMENT_S:
 
                 Debug.Log("realtimeclient: player movement received in switch");
@@ -258,6 +266,8 @@ public class RealTimeClient
 
                 break;
 
+
+            
 
             default:
                 Debug.Log("OpCode not found: " + data.OpCode);

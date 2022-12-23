@@ -40,14 +40,25 @@ public class RandomGameElementsManager : MonoBehaviour
 
 
 
-        unusedWeapons = CreateUnusedList(weapons, selectedWeapon).RandomOrder();
-        unusedSuspects = CreateUnusedList(suspects, selectedSuspect).RandomOrder();
-        unusedPlaces = CreateUnusedList(places, selectedPlace).RandomOrder();
+        //unusedWeapons = CreateUnusedList(weapons, selectedWeapon).RandomOrder();
+        //unusedSuspects = CreateUnusedList(suspects, selectedSuspect).RandomOrder();
+        //unusedPlaces = CreateUnusedList(places, selectedPlace).RandomOrder();
 
 
     }
 
-    string[] CreateUnusedList(string[] array, string selectedString)
+    public void PrepareLists(string selectedWeapon, string selectedSuspect, string selectedLocation)
+    {
+
+        unusedWeapons = CreateUnusedList(weapons, selectedWeapon).RandomOrder();
+        unusedSuspects = CreateUnusedList(suspects, selectedSuspect).RandomOrder();
+        unusedPlaces = CreateUnusedList(places, selectedLocation).RandomOrder();
+
+
+    }
+
+
+    public string[] CreateUnusedList(string[] array, string selectedString)
     {
         List<string> newList = new List<string>();
         int index = 0;

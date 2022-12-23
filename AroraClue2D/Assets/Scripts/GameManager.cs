@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
 
     //used to distiguish between the players in multiplayer game
     public int playerNumber;
-    public OtherPlayer[] otherPlayers;
+    public PlayerData[] playerDataList;
 
 
     //this creates multiple different bools at once.  cleaner than doing each separate. especially when they are all similar. 
@@ -34,12 +34,21 @@ public class GameManager : MonoBehaviour
     public GameObject launchMenu;
 
 
-    //the other players in the game
-    public GameObject playerTwo;
-    public GameObject playerThree;
-    public GameObject playerFour;
-    public GameObject playerFive;
-    public GameObject playerSix;
+    //the other players in the game (in SetupAfterMatchFound these will be instantiate except for the one for the local player's number)
+    public GameObject playerOneObject;
+    public GameObject playerTwoObject;
+    public GameObject playerThreeObject;
+    public GameObject playerFourObject;
+    public GameObject playerFiveObject;
+    public GameObject playerSixObject;
+
+    private Vector3 playerOneSpawnLocation = new Vector3(0, 0); // front center
+    private Vector3 playerTwoSpawnLocation = new Vector3(1, 0); // front left
+    private Vector3 playerThreeSpawnLocation = new Vector3(-1, 0); // front right
+    private Vector3 playerFourSpawnLocation = new Vector3(0, -1); // back center
+    private Vector3 playerFiveSpawnLocation = new Vector3(1, -1); // back left
+    private Vector3 playerSixSpawnLocation = new Vector3(-1, -1); // back right
+
 
 
     public int currentMoney;
@@ -58,7 +67,7 @@ public class GameManager : MonoBehaviour
 
     public bool submittedAnswer = false;
 
-    private bool isHost = false;
+    public bool isHost = false;
 
     //this is used by each player to say they are ready
     private bool ready = false; //TODO: set this to false
@@ -178,27 +187,178 @@ public class GameManager : MonoBehaviour
     }
 
 
-    //this will be called from ondatareceived after host preps game
-    void SetupAfterMatchFound()
+    //this will be called from ondatareceived OP_FIRE_MATCH_S call.
+    //@Yelsa Step 6
+    public void SetupAfterMatchFound(GamePrepData gamePrepData)
     {
+        ///1. Set the Sprites
+        //set player data list from GamePrepData received
+        playerDataList = gamePrepData.playerDataList;
 
-        launchMenu.SetActive(false);
+        //use playerDataList to setup the sprites for the other players
+        //loop through all players
+        for (int i = 0; i < playerDataList.Length; i++)
+        {
+            var player = playerDataList[i];
+
+            //based on the player number Instantiate and set local player number
+            switch (player.PlayerNumber)
+            {
+                //note I have set player number to start with 1 not 0
+                case 1:
+
+                    //the player id is not the same as the local player
+                    if(_playerId != player.PlayerId)
+                    {
+                        SetSprite(playerOneObject, player.PlayerSpriteName);
+
+                        //TODO: add a name over the player's head and set it's string here
+
+                        Instantiate(playerOneObject, playerOneSpawnLocation, Quaternion.identity);
+                    }
+                    //if the local player is player one don't instantiate a sprite, but do set them as the host
+                    else
+                    {
+                        isHost = true;
+                       
+                    }
+
+                    break;
+
+                case 2:
+
+                    //the player id is not the same as the local player, so instantiate a sprite for the other player
+                    if (_playerId != player.PlayerId)
+                    {
+                        SetSprite(playerTwoObject, player.PlayerSpriteName);
+
+                        //TODO: add a name over the player's head and set it's string here
+
+                        Instantiate(playerTwoObject, playerTwoSpawnLocation, Quaternion.identity);
+                    }
+
+
+                    break;
+
+                case 3:
+
+                    //the player id is not the same as the local player, so instantiate a sprite for the other player
+                    if (_playerId != player.PlayerId)
+                    {
+                        SetSprite(playerThreeObject, player.PlayerSpriteName);
+
+                        //TODO: add a name over the player's head and set it's string here
+
+                        Instantiate(playerThreeObject, playerThreeSpawnLocation, Quaternion.identity);
+                    }
+
+
+                    break;
+
+                case 4:
+
+                    //the player id is not the same as the local player, so instantiate a sprite for the other player
+                    if (_playerId != player.PlayerId)
+                    {
+                        SetSprite(playerFourObject, player.PlayerSpriteName);
+
+                        //TODO: add a name over the player's head and set it's string here
+
+                        Instantiate(playerFourObject, playerFourSpawnLocation, Quaternion.identity);
+                    }
+
+
+                    break;
+
+                case 5:
+
+                    //the player id is not the same as the local player, so instantiate a sprite for the other player
+                    if (_playerId != player.PlayerId)
+                    {
+                        SetSprite(playerFiveObject, player.PlayerSpriteName);
+
+                        //TODO: add a name over the player's head and set it's string here
+
+                        Instantiate(playerFiveObject, playerFiveSpawnLocation, Quaternion.identity);
+                    }
+
+
+                    break;
+
+                case 6:
+
+                    //the player id is not the same as the local player, so instantiate a sprite for the other player
+                    if (_playerId != player.PlayerId)
+                    {
+                        SetSprite(playerSixObject, player.PlayerSpriteName);
+
+                        //TODO: add a name over the player's head and set it's string here
+
+                        Instantiate(playerSixObject, playerSixSpawnLocation, Quaternion.identity);
+                    }
+
+
+                    break;
+
+                default:
+                    break;
+
+            }
+        }
+
+        ///2. Set the lists of unused weapon, suspect, location using the selected answer from the server
+      
+        //get the correct answer from server
+        string selectedWeapon = gamePrepData.selectedWeapon;
+        string selectedSuspect = gamePrepData.selectedSuspect;
+        string selectedPlace = gamePrepData.selectedPlace;
+
+        //use the answer to set the lists
+        RandomGameElementsManager.instance.PrepareLists(selectedWeapon, selectedSuspect, selectedPlace);
 
 
 
-        //TODO: use this to set the player sprites and names above head using ids
+        ///3. Spawn interaction points using the lists of unused "cards"
 
-        //TODO: get the correct answer from server and use it to make lists in random
-        //TODO: use those lists to spawn points
+        SpawnInteractionPoints(RandomGameElementsManager.instance.unusedWeapons,
+            RandomGameElementsManager.instance.unusedSuspects, RandomGameElementsManager.instance.unusedPlaces);
 
-        //TODO: also get player number from the server.. this will be used for spawning 
-        playerNumber = 0;
+        //launchMenu.SetActive(false);
 
-
-        //when loading is done
-        ThisPlayerIsReadyToContinue();
+        ///4. Tell the server the player is ready to start
+        ThisPlayerIsReadyToStart();
 
     }
+
+    public void SetSprite(GameObject playerObject, string spriteName)
+    {
+
+        switch (spriteName)
+        {
+            case "playerA":
+
+                playerObject.GetComponent<SpriteRenderer>().sprite = LaunchMenu.instance.playerASprite;
+
+                break;
+
+            case "playerB":
+
+                playerObject.GetComponent<SpriteRenderer>().sprite = LaunchMenu.instance.playerBSprite;
+
+                break;
+
+
+            default:
+                break;
+        }
+
+    }
+
+    void SpawnInteractionPoints(string[] unusedWeapons, string[] unusedSuspects, string[] unusedPlaces)
+    {
+        //TODO: use these lists to spawn the interaction points
+    }
+
 
 
     void Update()
@@ -331,14 +491,7 @@ public class GameManager : MonoBehaviour
                     HostStartCountdown();
                 }
 
-                if (_endGuessEvent)
-                {
-                    _endGuessEvent = false;
-
-                    Debug.Log("_endGuessEvent");
-
-                    HostEndGuessEvent();
-                }
+               
 
                 if (_resumeGameAfterGuessEvent)
                 {
@@ -368,22 +521,7 @@ public class GameManager : MonoBehaviour
     {
 
 
-        if (isReadyToStartCountdown)
-        {
-            Debug.Log("ready to start countdown");
-            ThisPlayerIsReadyToContinue();
-
-            isReadyToStartCountdown = false;
-        }
-
-        //shouldn't need this 
-        //if (isReadyToCheckAnswers)
-        //{
-        //    //TODO: check this... and remove?
-        //    Debug.Log("ready to check answers");
-
-        //    isReadyToCheckAnswers = false;
-        //}
+       
 
         if (isReadyToEndGuessEvent)
         {
@@ -438,6 +576,7 @@ public class GameManager : MonoBehaviour
                 float timeRemaining = guessInterval - timer;
                 if (timeRemaining <= 0)
                 {
+                    //@Yelsa Step 9
                     HostStartGuessEvent();
                 }
 
@@ -470,7 +609,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-
+    //@Yelsa Step 17
     private void SendMovement(float x, float y, float z)
     {
 
@@ -486,7 +625,7 @@ public class GameManager : MonoBehaviour
 
         RealtimePayload realtimePayload = new RealtimePayload(jsonData);
 
-
+        
         _realTimeClient.SendMessage(OP_PLAYER_MOVEMENT, realtimePayload);
 
 
@@ -552,6 +691,7 @@ public class GameManager : MonoBehaviour
 
 
     //called from submit button or by countdown timer ending
+    //@Yelsa Step 12
     public void SubmitAnswer(string weapon, string suspect, string location)
     {
         timerObjectInMenu.SetActive(false);
@@ -573,8 +713,11 @@ public class GameManager : MonoBehaviour
     }
 
 
-    //this will be called by the player when they end their own countdown timer...
-    public async void PlayerCheckGuess(string weapon, string suspect, string location)
+    //this will be called by the player when they end their own countdown timer.
+    //tell the server that this player has finished the guess event and is ready
+    //to check answer. once all answers are checked,
+    //the server will send a call to the players to either end the game (if their is a winner) or resume the game 
+    public void PlayerCheckGuess(string weapon, string suspect, string location)
     {
 
 
@@ -584,85 +727,102 @@ public class GameManager : MonoBehaviour
         string jsonData = JsonUtility.ToJson(playerGuessData);
 
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId, weapon, suspect, location, submittedAnswer);
+
+        _realTimeClient.SendMessage(OP_CHECK_ANSWERS, realtimePayload);
+            
         
-        AnswerCheckResponse answerCheckResponse = JsonConvert.DeserializeObject<AnswerCheckResponse>(response);
-
-        bool isWeapon = answerCheckResponse.isWeaponCorrect;
-        bool isSuspect = answerCheckResponse.isSuspectCorrect;
-        bool isLocation = answerCheckResponse.isLocationCorrect;
+        //AnswerCheckResponse answerCheckResponse = JsonConvert.DeserializeObject<AnswerCheckResponse>(response);
 
 
-        if(isWeapon)
-        {
-            Debug.Log("weapon correct. " + weapon);
+        //TODO: handle this in on data received.
+        //bool isWeapon = answerCheckResponse.isWeaponCorrect;
+        //bool isSuspect = answerCheckResponse.isSuspectCorrect;
+        //bool isLocation = answerCheckResponse.isLocationCorrect;
 
-        }
-        else
-        {
-            Debug.Log("weapon incorrect. " + weapon);
-        }
+        //if(isWeapon)
+        //{
+        //    Debug.Log("weapon correct. " + weapon);
 
-        if (isSuspect)
-        {
-            Debug.Log("suspect correct. " + suspect);
+        //}
+        //else
+        //{
+        //    Debug.Log("weapon incorrect. " + weapon);
+        //}
 
-        }
-        else
-        {
-            Debug.Log("suspect incorrect. " + suspect);
-        }
+        //if (isSuspect)
+        //{
+        //    Debug.Log("suspect correct. " + suspect);
 
-        if (isLocation)
-        {
-            Debug.Log("location correct. " + location);
+        //}
+        //else
+        //{
+        //    Debug.Log("suspect incorrect. " + suspect);
+        //}
 
-        }
-        else
-        {
-            Debug.Log("location incorrect. " + location);
-        }
+        //if (isLocation)
+        //{
+        //    Debug.Log("location correct. " + location);
 
-        if(isWeapon && isSuspect && isLocation)
-        {
-            ThisPlayerHasCorrectAnswer();
-        }
-        else
-        {
-            ThisPlayerIsReadyToContinue();
-        }
+        //}
+        //else
+        //{
+        //    Debug.Log("location incorrect. " + location);
+        //}
 
-        //after they call server, they will be able to check if they won or are ready to keep playing
+        //if(isWeapon && isSuspect && isLocation)
+        //{
+        //    ThisPlayerHasCorrectAnswer();
+        //}
+        //else
+        //{
+        //    ThisPlayerIsReadyToContinue();
+        //}
+
+        //after they call server, they will get onDataRecieved which will
+        //be able to check if they won or are ready to keep playing
 
         submittedAnswer = false;
 
     }
 
-    async void ThisPlayerHasCorrectAnswer()
+
+    //call this in onDataReceived if the eerver returns that the player has the correct answer
+    void ThisPlayerHasCorrectAnswer()
     {
 
-        GameEventToServer thisPlayerWon = new GameEventToServer("209", _playerId);
+        //GameEventToServer thisPlayerWon = new GameEventToServer("209", _playerId);
         
-        string jsonData = JsonUtility.ToJson(thisPlayerWon);
+        //string jsonData = JsonUtility.ToJson(thisPlayerWon);
 
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+
+        _realTimeClient.SendMessage(OP_GAMEOVER, realtimePayload);
 
         //when players recieve this message they will run the method to end the game
 
     }
 
-    async void ThisPlayerIsReadyToContinue()
+    void ThisPlayerIsReadyToContinue()
     {
 
-        GameEventToServer thisPlayerReady = new GameEventToServer("411", _playerId);
+        //GameEventToServer thisPlayerReady = new GameEventToServer("411", _playerId);
 
-        string jsonData = JsonUtility.ToJson(thisPlayerReady);
+        //string jsonData = JsonUtility.ToJson(thisPlayerReady);
 
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+
+        _realTimeClient.SendMessage(OP_RESUME_GAME, realtimePayload);
+
+        //when server receives message* ?
         //when host receives message that all players are ready they will set bool ready to true which will allow
         // the next event to fire.
 
@@ -741,60 +901,95 @@ public class GameManager : MonoBehaviour
     }
 
 
-
-    async void HostPrepGame()
+    //after the server call to fire the game the player will know if they are player 1,
+    // this will tell them (in on data received fire match) if they are the host
+    // if they are the host they will send this call with random game data
+    //@Yelsa Step 4B
+    public void HostPrepGame()
     {
+        //set the player as the host if they get to this point
+        isHost = true;
+
         //have the host roll the random stuff, and then send it to the server...
         RandomGameElementsManager.instance.RandomizeNewGame();
 
-        NewGameData newGameData = new NewGameData("210", 
+        /*NewGameData newGameData = new NewGameData("210", 
             RandomGameElementsManager.instance.selectedWeapon,
             RandomGameElementsManager.instance.selectedSuspect,
             RandomGameElementsManager.instance.selectedPlace
             );
+        */
 
-        string jsonData = JsonUtility.ToJson(newGameData);
+        //string jsonData = JsonUtility.ToJson(newGameData);
 
-        await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
 
+        RealtimePayload realtimePayload = new RealtimePayload(RandomGameElementsManager.instance.selectedWeapon, 
+            RandomGameElementsManager.instance.selectedSuspect, RandomGameElementsManager.instance.selectedPlace);
+
+        _realTimeClient.SendMessage(OP_PREP_GAME, realtimePayload);
+
+        //ready local stuff might not be needed... just use server calls...
         //we need to do a ready check before we continue. server will set ready to true when ready check is done
-        ready = false;
-        hostReady = false;
+        
+        //TODO: remove this local readies and only user server?
+        //ready = false;
+        //hostReady = false;
 
+
+
+
+        //TODO: this should all be in onDataReceived as response to call to prepgame
         //TODO: data received "prepare the game" response from this will tell the players to run SetUIAfterMatchFound();
-        SetupAfterMatchFound(); //TODO: remove this to datareceived
+        //SetupAfterMatchFound(); //TODO: remove this to datareceived
 
         //this will not run until the ready check completes
-        _startGame = true;
+        //_startGame = true;
 
     }
 
-    async void HostStartGame()
+    //after the call to fire match, all players will SetupAfterMatchFound
+    //when they are done with that they will call this method to tell the server they are ready to start the game
+    void ThisPlayerIsReadyToStart()
     {
 
-        GameEventToServer startGameServerMessage = new GameEventToServer("201", _playerId);
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
 
-        string jsonData = JsonUtility.ToJson(startGameServerMessage);
+        _realTimeClient.SendMessage(OP_START_GAME, realtimePayload);
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    }
 
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+
+    //TODO: this should just be handled in onDataReceived by a call from server.
+    //server will send a call when all players are ready to start, and then the host will start the timer and the players will localresume
+    void HostStartGame()
+    {
+
+        //GameEventToServer startGameServerMessage = new GameEventToServer("201", _playerId);
+
+        //string jsonData = JsonUtility.ToJson(startGameServerMessage);
+
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+
+        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
         
 
-        Debug.Log("hoststartgame: response code " + responseData.opCode);
+        //Debug.Log("hoststartgame: response code " + responseData.opCode);
 
         //this will have a datareceived response telling the players to all LocalResume and the host to StartTimer
 
-        //TODO: remove
-        if (isHost)
-        {
-            StartTimer();
-        }
-        LocalResume(); //TODO: remove
+        ////TODO: remove
+        //if (isHost)
+        //{
+        //    StartTimer();
+        //}
+        //LocalResume(); //TODO: remove
 
     }
 
+
+   
 
 
 
@@ -815,51 +1010,62 @@ public class GameManager : MonoBehaviour
 
     }
 
-    async void HostStartGuessEvent()
+    //when the host's timer finishes they will call the server,
+    //the server will respond by telling all players to load into the guess event,
+    //when the player loads into the guess event they will start their local timer
+    //@Yelsa Step 9
+    void HostStartGuessEvent()
     {
 
         //tell the server that the players should start the guess event
-        GameEventToServer startGuessEventServerMessage = new GameEventToServer("202", _playerId);
+        //GameEventToServer startGuessEventServerMessage = new GameEventToServer("202", _playerId);
 
-        string jsonData = JsonUtility.ToJson(startGuessEventServerMessage);
+        //string jsonData = JsonUtility.ToJson(startGuessEventServerMessage);
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
 
-        Debug.Log("hoststartguessevent: response code " + responseData.opCode);
+        //Debug.Log("hoststartguessevent: response code " + responseData.opCode);
 
+
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+
+        _realTimeClient.SendMessage(OP_START_GUESS_EVENT, realtimePayload);
 
         //this should send a dataReceived to tell each player to GuessEvent();
-
-        GuessEvent(); //TODO remove
+        //GuessEvent(); //TODO remove
 
     }
 
-    async void HostStartCountdown()
+
+    //this is unneeded because the server can just have each player
+    //start a local countdown when they received the call from the server to load into the guess event
+    void HostStartCountdown()
     {
-        //TODO: call server and tell users to show timer / start the timer
-        GameEventToServer startCountdownServerMessage = new GameEventToServer("901", _playerId);
+        ////TODO: call server and tell users to show timer / start the timer
+        //GameEventToServer startCountdownServerMessage = new GameEventToServer("901", _playerId);
 
-        string jsonData = JsonUtility.ToJson(startCountdownServerMessage);
+        //string jsonData = JsonUtility.ToJson(startCountdownServerMessage);
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
 
-        Debug.Log("countdown start: response code " + responseData.opCode);
+        //Debug.Log("countdown start: response code " + responseData.opCode);
 
 
-        //this should send a dataReceived to tell each player to LocalStartCountdown();
-
-        LocalStartCountdown(); //TODO remove
+        //this should send a dataReceived to tell each player to LocalStartCountdown()
+        //LocalStartCountdown(); //TODO remove
 
     }
 
+
+    //this starts the local countdown for the guess event
     void LocalStartCountdown()
     {
-        //TODO: we probably want to just handle the countdown locally
         countdownRunning = true;
+
         //show the timer on the screen
         timerObjectInMenu.SetActive(true);
         timerObjectOutOfMenu.SetActive(true);
@@ -871,54 +1077,36 @@ public class GameManager : MonoBehaviour
     }
 
 
-    async void HostEndGuessEvent()
-    {
-        //TODO: tell the server that the players should end the guess event
-        GameEventToServer endGuessEventServerMessage = new GameEventToServer("203", _playerId);
-
-        string jsonData = JsonUtility.ToJson(endGuessEventServerMessage);
-
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
-
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
-
-        Debug.Log("hostendguessevent: response code " + responseData.opCode);
-
-
-        //this should send a dataReceived to tell each player to EndGuessResumeGameCutscene();
-
-        EndGuessResumeGameCutscene(); //TODO remove
-
-    }
-
+    //this will be handled by the server, when all players have checked answer a server message will be sent out
     async void HostResumeGameAfterGuessEvent()
     {
-        //TODO: tell the server that the players should resume the investigation
-        GameEventToServer resumeGameAfterGuessServerMessage = new GameEventToServer("204", _playerId);
+        ////TODO: tell the server that the players should resume the investigation
+        //GameEventToServer resumeGameAfterGuessServerMessage = new GameEventToServer("204", _playerId);
 
-        string jsonData = JsonUtility.ToJson(resumeGameAfterGuessServerMessage);
+        //string jsonData = JsonUtility.ToJson(resumeGameAfterGuessServerMessage);
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
 
-        Debug.Log("resumeGameAfterGuessServerMessage: response code " + responseData.opCode);
+        //Debug.Log("resumeGameAfterGuessServerMessage: response code " + responseData.opCode);
 
-        //ready check should be triggered by the dataReceived response code
+        ////ready check should be triggered by the dataReceived response code
 
-        //this will not run until after ready check
-        _resumeGameAfterGuessEvent = true;
+        ////this will not run until after ready check
+        //_resumeGameAfterGuessEvent = true;
 
     }
 
+    //this will be handled by the server, when all players have checked answer a server message will be sent out
     async void HostEndGame()
     {
 
-        GameEventToServer endGameServerMessage = new GameEventToServer("209", _playerId);
+        //GameEventToServer endGameServerMessage = new GameEventToServer("209", _playerId);
 
-        string jsonData = JsonUtility.ToJson(endGameServerMessage);
+        //string jsonData = JsonUtility.ToJson(endGameServerMessage);
 
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
         //use this format to get the reponse from the server
         //PlayerMovementData responseData = JsonConvert.DeserializeObject<PlayerMovementData>(response);
@@ -1028,6 +1216,7 @@ public class GameManager : MonoBehaviour
     /// Then we send the data to that function to process using a handler.
     /// 
     /// </summary>
+    // @Yelsa Step 1
     public async void OnFindMatchPressed()
     {
         Debug.Log("Find match pressed");
@@ -1123,7 +1312,7 @@ public class GameManager : MonoBehaviour
     //{
     //    Debug.Log("GM: subscribe to fullfillment");
 
-        
+
     //    /*
     //    PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(playerSessionObject);
 
@@ -1149,6 +1338,9 @@ public class GameManager : MonoBehaviour
     //    }*/
     //}
 
+
+    //use the response from the server (PlayerSessionObject) to create a Client to connect to a player session
+    //@Yelsa Step 3
     private void EstablishConnectionToRealtimeServer(PlayerSessionObject playerSessionObject)
     {
         Debug.Log("establish connection to server method called");
@@ -1167,6 +1359,7 @@ public class GameManager : MonoBehaviour
         //show UI to let player know something is loading
         LoadingMatchUI(true);
 
+        //this is where the connection between client and playersession is established
         _realTimeClient = new RealTimeClient(ipAddress, port, localUdpPort, playerSessionId, payload, ConnectionType.RT_OVER_WS_UDP_UNSECURED);
 
         if (_realTimeClient != null)
@@ -1188,6 +1381,9 @@ public class GameManager : MonoBehaviour
 
             //TODO: @YELSA implement this method with server calls that work... to the server not the lambda?
             /// note that at this point the player is connecting but reserved... they are then timing out after 1 minute. fix this issue
+
+            
+
             //CheckIfHost();
 
             
@@ -1214,45 +1410,42 @@ public class GameManager : MonoBehaviour
         {
             LaunchMenu.instance.statusUpdateText.text = "Waiting for other players.";
 
-            // need to be careful with "ready" because if host then ... host needs a hostReady ..
-            ready = true;
-            ThisPlayerIsReadyToContinue();
         }
 
     }
 
-
-    async void CheckIfHost()
+    //this will be handled onDataRecieved after the player connects to the server
+     void CheckIfHost()
     {
-        //determine if player is host by asking server.. if they are isHost = true
+        ////determine if player is host by asking server.. if they are isHost = true
 
 
-        GameEventToServer getHost = new GameEventToServer("199", _playerId);
+        //GameEventToServer getHost = new GameEventToServer("199", _playerId);
 
-        string jsonData = JsonUtility.ToJson(getHost);
-
-
-        string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+        //string jsonData = JsonUtility.ToJson(getHost);
 
 
-        GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        if (responseData != null)
-        {
-            string responsePlayerId = responseData.playerId;
 
-            if (responsePlayerId == _playerId)
-            {
-                Debug.Log("you are the host");
-                isHost = true;
-            }
-            else
-            {
-                //this should be an empty string if not the host
-                Debug.Log("you are not the host. reponseid = " + responsePlayerId + " . your id = " + _playerId);
-                isHost = false;
-            }
-        }
+        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+
+        //if (responseData != null)
+        //{
+        //    string responsePlayerId = responseData.playerId;
+
+        //    if (responsePlayerId == _playerId)
+        //    {
+        //        Debug.Log("you are the host");
+        //        isHost = true;
+        //    }
+        //    else
+        //    {
+        //        //this should be an empty string if not the host
+        //        Debug.Log("you are not the host. reponseid = " + responsePlayerId + " . your id = " + _playerId);
+        //        isHost = false;
+        //    }
+        //}
     }
 
     
@@ -1431,13 +1624,21 @@ public class RealtimePayload
     public string weaponGuess;
     public string suspectGuess;
     public string locationGuess;
+    public bool submittedAnswer;
+
+    public string selectedWeapon;
+    public string selecedSuspect;
+    public string selectedPlace;
 
     public RealtimePayload() { }
+
+    //any call that only needs to send playerId..
     public RealtimePayload(string playerIdIn)
     {
         this.playerId = playerIdIn;
     }
 
+    //movement
     public RealtimePayload(string playerId, float playerXLocation, float playerYLocation, float playerZLocation)
     {
         this.playerId = playerId;
@@ -1446,13 +1647,23 @@ public class RealtimePayload
         this.playerZLocation = playerZLocation;
     }
 
-    public RealtimePayload(string playerId, string weaponGuess, string suspectGuess, string locationGuess)
+    //check answer
+    public RealtimePayload(string playerId, string weaponGuess, string suspectGuess, string locationGuess, bool submittedAnswer)
     {
         this.playerId = playerId;
         this.weaponGuess = weaponGuess;
         this.suspectGuess = suspectGuess;
         this.locationGuess = locationGuess;
+        this.submittedAnswer = submittedAnswer;
 
+    }
+
+    //prep game
+    public RealtimePayload(string selectedWeapon, string selectedSuspect, string selectedPlace)
+    {
+        this.selectedWeapon = selectedWeapon;
+        this.selecedSuspect = selectedSuspect;
+        this.selectedPlace = selectedPlace;
     }
 
 }
@@ -1562,6 +1773,55 @@ public class PlayerSessionObject
     public string Status;
     public string IpAddress;
     public string Port;
+}
+
+[Serializable]
+public class PlayerData
+{
+    public string PlayerName;
+    public string PlayerSpriteName;
+    public int PlayerNumber;
+    public string PlayerId;
+    public bool ReadyToStart;
+    public bool ReadyToResume;
+
+    public PlayerData() { }
+
+    public PlayerData(string PlayerName, string PlayerSpriteName, int PlayerNumber, string PlayerId, bool ReadyToStart, bool ReadyToResume)
+    {
+        this.PlayerName = PlayerName;
+        this.PlayerSpriteName = PlayerSpriteName;
+        this.PlayerNumber = PlayerNumber;
+        this.PlayerId = PlayerId;
+        this.ReadyToStart = ReadyToStart;
+        this.ReadyToResume = ReadyToResume;
+
+    }
+    
+}
+
+[Serializable]
+public class GamePrepData
+{
+    public PlayerData[] playerDataList;
+
+    public string selectedWeapon;
+    public string selectedSuspect;
+    public string selectedPlace;
+
+    public GamePrepData() { }
+
+    public GamePrepData(PlayerData[] playerDataList, string weapon, string suspect, string place)
+    {
+        this.playerDataList = playerDataList;
+        this.selectedWeapon = weapon;
+        this.selectedSuspect = suspect;
+        this.selectedPlace = place;
+
+    }
+
+
+
 }
 
 
