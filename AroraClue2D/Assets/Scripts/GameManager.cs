@@ -65,15 +65,16 @@ public class GameManager : MonoBehaviour
     //how often should a guess event be triggered (minutes) 1
     public float guessInterval = 1f;
 
-    public bool submittedAnswer = false;
+    //default true, if the user doesn't submit the answer in time this is set to false in the countdown method
+    public bool submittedAnswer = true;
 
     public bool isHost = false;
 
-    //this is used by each player to say they are ready
-    private bool ready = false; //TODO: set this to false
+    ////this is used by each player to say they are ready
+    //private bool ready = false; //TODO: set this to false
 
-    //this is used by the host to determine if they can fire events
-    private bool hostReady = true; //TODO: set this to false
+    ////this is used by the host to determine if they can fire events
+    //private bool hostReady = true; //TODO: set this to false
 
 
 
@@ -141,6 +142,7 @@ public class GameManager : MonoBehaviour
     public const int OP_SET_PLAYER_INFO_S = 10;
     public const int OP_CHECK_ANSWERS_S = 11;
     public const int OP_PLAYER_MOVEMENT_S = 12;
+    public const int OP_HOLD_AFTER_GUESS_CHECKED_S = 13;
 
 
     //messages player sends
@@ -377,11 +379,9 @@ public class GameManager : MonoBehaviour
 
         ServerProcesses();
 
-        if (ready)
-        {
-            LocalProcesses();
-        }
-        
+        LocalProcesses();
+
+
     }
 
 
@@ -408,129 +408,62 @@ public class GameManager : MonoBehaviour
             //update UI?
         }
 
+        
+        // the player is moving, send data to server to display to other players
         if (_movement)
         {
-            _movement = false;   
+            _movement = false;
 
-            if (_apiManager != null)
+            float x = PlayerController.instance.transform.position.x;
+            float y = PlayerController.instance.transform.position.y;
+            float z = PlayerController.instance.transform.position.z;
+            float minMovementToSendToServer = 2;
+
+            //if first move send to server
+            if (_firstMovement)
             {
-                float x = PlayerController.instance.transform.position.x;
-                float y = PlayerController.instance.transform.position.y;
-                float z = PlayerController.instance.transform.position.z;
-                float minMovementToSendToServer = 2;
+                _firstMovement = false;
 
-                //if first move send to server
-                if (_firstMovement)
-                {
-                    _firstMovement = false;
-
-                    SendMovement(x, y, z);
-                }
-                //or if enough movement is significant enough send to server
-                else if (Math.Abs(lastSentX - x) > minMovementToSendToServer)
-                {
-                    SendMovement(x, y, z);
-
-                }
-                else if (Math.Abs(lastSentY - y) > minMovementToSendToServer)
-                {
-                    SendMovement(x, y, z);
-
-                }
+                SendMovement(x, y, z);
+            }
+            //or if enough movement is significant enough send to server
+            else if (Math.Abs(lastSentX - x) > minMovementToSendToServer)
+            {
+                SendMovement(x, y, z);
 
             }
-            else
+            else if (Math.Abs(lastSentY - y) > minMovementToSendToServer)
             {
-                Debug.Log("movement, api is null");
+                SendMovement(x, y, z);
+
             }
         }
 
-
-        //Only called if the player is the host of the server
-        if (isHost)
-        {
-            //this is handled by ready checks to all players through server
-            if (hostReady)
-            {
-                if (_prepGame)
-                {
-                    _prepGame = false;
-
-                    Debug.Log("_prepGame");
-
-                    HostPrepGame();
-
-                }
-
-                if (_startGame)
-                {
-                    _startGame = false;
-
-                    Debug.Log("_startGame");
-
-                    HostStartGame();
-
-                }
-
-                if (_startGuessEvent)
-                {
-                    _startGuessEvent = false;
-
-                    Debug.Log("_startGuessEvent");
-
-                    HostStartGuessEvent();
-
-                }
-
-                if (_startCountdown)
-                {
-                    _startCountdown = false;
-
-                    Debug.Log("_startCountdown");
-
-                    HostStartCountdown();
-                }
-
-               
-
-                if (_resumeGameAfterGuessEvent)
-                {
-                    _resumeGameAfterGuessEvent = false;
-
-                    Debug.Log("_resumeGameAfterGuessEvent");
-
-                    HostResumeGameAfterGuessEvent();
-                }
-
-                if (_gameOver == true)
-                {
-                    _gameOver = false;
-
-                    Debug.Log("_gameOver");
-
-                    HostEndGame();
-                }
-
-            }
-            
-        }
         
     }
 
     void LocalProcesses()
     {
+        //@Yelsa Step 11 after the start guess cutscene ends this bool will turn on and start the countdown locally
+        if (isReadyToStartCountdown)
+        {
+            isReadyToStartCountdown = false;
+
+            LocalStartCountdown();
+
+        }
 
 
-       
-
+        //@Yelsa Step 14a after the end guess cutscene ends this bool will turn on
         if (isReadyToEndGuessEvent)
         {
             Debug.Log("ready to resume");
-            ThisPlayerIsReadyToContinue();
+            ThisPlayerIsReadyToContinueAfterGuessEvent();
 
             isReadyToEndGuessEvent = false;
         }
 
+        //this will turn on after the end game cutscene ends
         if (isReadyToEndGame)
         {
             Debug.Log("ready to end game");
@@ -553,6 +486,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        //when the local countdown is running this will be turned on
         if (countdownRunning)
         {
 
@@ -563,7 +497,7 @@ public class GameManager : MonoBehaviour
     }
 
     
-    void TimerUntilGuessEvent()
+    public void TimerUntilGuessEvent()
     {
         //only host should run the timers and trigger the events
         if (isHost)
@@ -587,24 +521,20 @@ public class GameManager : MonoBehaviour
 
     void CountdownDuringGuessEvent()
     {
-        if (countdownRunning)
+        countdown -= (Time.deltaTime / 60);
+
+        timerObjectInMenu.GetComponent<TMP_Text>().text = Mathf.Floor(countdown * 60).ToString() + " Seconds Remaining";
+        timerObjectOutOfMenu.GetComponent<TMP_Text>().text = Mathf.Floor(countdown * 60).ToString() + " Seconds Remaining";
+
+
+        //if this countdown hits 0, then fire the submitanswer method with empty strings
+        if (countdown <= 0)
         {
+            countdownRunning = false;
 
-            countdown -= (Time.deltaTime / 60);
-
-            timerObjectInMenu.GetComponent<TMP_Text>().text = Mathf.Floor(countdown * 60).ToString() + " Seconds Remaining";
-            timerObjectOutOfMenu.GetComponent<TMP_Text>().text = Mathf.Floor(countdown * 60).ToString() + " Seconds Remaining";
-
-
-            //if this countdown hits 0, then fire the submitanswer method with empty strings
-            if (countdown <= 0)
-            {
-                countdownRunning = false;
-
-                submittedAnswer = false;
-                SubmitAnswer("","","");
-            }
-
+            submittedAnswer = false;
+            //@Yelsa Step 12 (countdown ended before answer submitted)
+            SubmitAnswer("", "", "");
         }
     }
 
@@ -612,46 +542,16 @@ public class GameManager : MonoBehaviour
     //@Yelsa Step 17
     private void SendMovement(float x, float y, float z)
     {
-
         Debug.Log("pos : " + x + "," + y + "," + z);
+        
+        //send the movement to the server
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId, x, y, z);
+        _realTimeClient.SendMessage(OP_PLAYER_MOVEMENT, realtimePayload);
 
-        PlayerMovementData playerMovementData = new PlayerMovementData(x, y, z, _playerId);
-
-        string jsonData = JsonUtility.ToJson(playerMovementData);
-
+        //use this to prevent spam by requiring a threshold of change from last sent to send again
         lastSentX = x;
         lastSentY = y;
         lastSentZ = z;
-
-        RealtimePayload realtimePayload = new RealtimePayload(jsonData);
-
-        
-        _realTimeClient.SendMessage(OP_PLAYER_MOVEMENT, realtimePayload);
-
-
-
-
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
-
-        ////TODO: use response to set the position of player by id
-        ////example using gameSession
-        ////GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
-
-        ////example get player 2 game object. move it to position x , y , z with the data obtained from server.
-
-
-        //PlayerMovementData responseData = JsonConvert.DeserializeObject<PlayerMovementData>(response);
-
-        //Debug.Log("reponse movement data x = " + responseData.playerXPosition);
-
-
-        //TODO: get the player id that sent the data and move them to that pos 
-        //on the client's screen
-
-
-        //playerTwo.transform.position
-        //   = new Vector3(responseData.playerXPosition, responseData.playerYPosition, responseData.playerZPosition);
-
 
 
     }
@@ -663,8 +563,7 @@ public class GameManager : MonoBehaviour
         //move players (each player will be placed at spawn based on thier player number)
         LocalCallSpawnForGuessEvent();
 
-
-        //TODO: test that this is working
+        //TODO: test if this is the best way
         //spawn NPC (lead detective)
         if(GameObject.Find("leadDetective") == null)
         {
@@ -698,95 +597,36 @@ public class GameManager : MonoBehaviour
         timerObjectOutOfMenu.SetActive(false);
         countdown = 0;
 
-        if (!submittedAnswer)
-        {
-            NoAnswerSubmittedCutscene();
-
-            //TODO: send server some data from this player to share
-
-        }
-        else
-        {
-            PlayerCheckGuess(weapon, suspect, location);
-            
-        }
-    }
-
-
-    //this will be called by the player when they end their own countdown timer.
-    //tell the server that this player has finished the guess event and is ready
-    //to check answer. once all answers are checked,
-    //the server will send a call to the players to either end the game (if their is a winner) or resume the game 
-    public void PlayerCheckGuess(string weapon, string suspect, string location)
-    {
-
-
-        PlayerGuessData playerGuessData = new PlayerGuessData("305", weapon, suspect, location, submittedAnswer, _playerId);
-
-
-        string jsonData = JsonUtility.ToJson(playerGuessData);
-
-
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
-
+      
+        //send the server the player's answer
         RealtimePayload realtimePayload = new RealtimePayload(_playerId, weapon, suspect, location, submittedAnswer);
 
         _realTimeClient.SendMessage(OP_CHECK_ANSWERS, realtimePayload);
-            
-        
-        //AnswerCheckResponse answerCheckResponse = JsonConvert.DeserializeObject<AnswerCheckResponse>(response);
 
 
-        //TODO: handle this in on data received.
-        //bool isWeapon = answerCheckResponse.isWeaponCorrect;
-        //bool isSuspect = answerCheckResponse.isSuspectCorrect;
-        //bool isLocation = answerCheckResponse.isLocationCorrect;
+        //reset this bool to default after sending to server
+        submittedAnswer = true;
 
-        //if(isWeapon)
-        //{
-        //    Debug.Log("weapon correct. " + weapon);
-
-        //}
-        //else
-        //{
-        //    Debug.Log("weapon incorrect. " + weapon);
-        //}
-
-        //if (isSuspect)
-        //{
-        //    Debug.Log("suspect correct. " + suspect);
-
-        //}
-        //else
-        //{
-        //    Debug.Log("suspect incorrect. " + suspect);
-        //}
-
-        //if (isLocation)
-        //{
-        //    Debug.Log("location correct. " + location);
-
-        //}
-        //else
-        //{
-        //    Debug.Log("location incorrect. " + location);
-        //}
-
-        //if(isWeapon && isSuspect && isLocation)
-        //{
-        //    ThisPlayerHasCorrectAnswer();
-        //}
-        //else
-        //{
-        //    ThisPlayerIsReadyToContinue();
-        //}
-
-        //after they call server, they will get onDataRecieved which will
-        //be able to check if they won or are ready to keep playing
-
-        submittedAnswer = false;
 
     }
+
+    //@Yelsa TODO: make the UI for this and then turn it on and off here
+    public void HoldForOtherPlayersAnswersUI(bool isOn)
+    {
+
+        if (isOn)
+        {
+            //Turn on the UI to show message to user that they are waiting for other users to answer
+        }
+        else
+        {
+            //turn off the ui
+        }
+
+
+    }
+
+
 
 
     //call this in onDataReceived if the eerver returns that the player has the correct answer
@@ -808,40 +648,30 @@ public class GameManager : MonoBehaviour
 
     }
 
-    void ThisPlayerIsReadyToContinue()
+    //@Yelsa Step 14a
+    void ThisPlayerIsReadyToContinueAfterGuessEvent()
     {
 
-        //GameEventToServer thisPlayerReady = new GameEventToServer("411", _playerId);
-
-        //string jsonData = JsonUtility.ToJson(thisPlayerReady);
-
-
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
-
+        //the player finished the end guess event cutscene
+        //send the server a message that this player is ready to resume the investigation phase
         RealtimePayload realtimePayload = new RealtimePayload(_playerId);
 
         _realTimeClient.SendMessage(OP_RESUME_GAME, realtimePayload);
 
-        //when server receives message* ?
-        //when host receives message that all players are ready they will set bool ready to true which will allow
-        // the next event to fire.
 
     }
 
 
-
+    //TODO: @Yelsa fix this... it is still in use
     //this will be called locally by the player after the host tells them to
     void LocalCallSpawnForGuessEvent()
     {
         fadingBetweenAreas = true;
 
-        //handle spawn for local player
-        HandleGuessEventSpawn(playerNumber);
-
-        //handle spawn for other players
-        for (int i = 0; i < otherPlayers.Length; i++)
+        //spawn each player on the player list
+        for (int i = 0; i < playerDataList.Length; i++)
         {
-            int playerNum = otherPlayers[i].playerNumber;
+            int playerNum = playerDataList[i].PlayerNumber;
 
             HandleGuessEventSpawn(playerNum);
 
@@ -855,41 +685,86 @@ public class GameManager : MonoBehaviour
     //spawn the player based on their player number
     void HandleGuessEventSpawn(int pNum)
     {
+        var isLocalPlayer = false;
+        if(pNum == playerNumber)
+        {
+            isLocalPlayer = true;
+        }
+
         switch (pNum)
         {
             case 1:
 
-                PlayerController.instance.transform.position = new Vector3(1, -3, transform.position.z);
+                if (isLocalPlayer)
+                {
+                    PlayerController.instance.transform.position = new Vector3(1, -3, transform.position.z);
+                }
+                else
+                {
+                    playerOneObject.transform.position = new Vector3(1, -3, transform.position.z);
+                }
 
                 break;
 
             case 2:
-
-                PlayerController.instance.transform.position = new Vector3(4, -3, transform.position.z);
+                if (isLocalPlayer)
+                {
+                    PlayerController.instance.transform.position = new Vector3(4, -3, transform.position.z);
+                }
+                else
+                {
+                    playerOneObject.transform.position = new Vector3(4, -3, transform.position.z);
+                }
 
                 break;
 
             case 3:
 
-                PlayerController.instance.transform.position = new Vector3(-1, -3, transform.position.z);
+                if (isLocalPlayer)
+                {
+                    PlayerController.instance.transform.position = new Vector3(-1, -3, transform.position.z);
+                }
+                else
+                {
+                    playerOneObject.transform.position = new Vector3(-1, -3, transform.position.z);
+                }
 
                 break;
 
             case 4:
 
-                PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                if (isLocalPlayer)
+                {
+                    PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                }
+                else
+                {
+                    playerOneObject.transform.position = new Vector3(-4, -3, transform.position.z);
+                }
 
                 break;
 
             case 5:
-
-                PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                if (isLocalPlayer)
+                {
+                    PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                }
+                else
+                {
+                    playerOneObject.transform.position = new Vector3(-4, -3, transform.position.z);
+                }
 
                 break;
 
             case 6:
-
-                PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                if (isLocalPlayer)
+                {
+                    PlayerController.instance.transform.position = new Vector3(-4, -3, transform.position.z);
+                }
+                else
+                {
+                    playerOneObject.transform.position = new Vector3(-4, -3, transform.position.z);
+                }
 
                 break;
 
@@ -998,7 +873,7 @@ public class GameManager : MonoBehaviour
         timerRunning = true;
     }
 
-    void LocalResume()
+    public void LocalResume()
     {
         //allow the local player to begin moving / load anything needed for the player to begin investigating
         movementDisabled = false;
@@ -1011,30 +886,16 @@ public class GameManager : MonoBehaviour
     }
 
     //when the host's timer finishes they will call the server,
-    //the server will respond by telling all players to load into the guess event,
-    //when the player loads into the guess event they will start their local timer
     //@Yelsa Step 9
     void HostStartGuessEvent()
     {
 
         //tell the server that the players should start the guess event
-        //GameEventToServer startGuessEventServerMessage = new GameEventToServer("202", _playerId);
-
-        //string jsonData = JsonUtility.ToJson(startGuessEventServerMessage);
-
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
-
-        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
-
-        //Debug.Log("hoststartguessevent: response code " + responseData.opCode);
-
-
         RealtimePayload realtimePayload = new RealtimePayload(_playerId);
 
         _realTimeClient.SendMessage(OP_START_GUESS_EVENT, realtimePayload);
 
-        //this should send a dataReceived to tell each player to GuessEvent();
-        //GuessEvent(); //TODO remove
+
 
     }
 
@@ -1121,7 +982,7 @@ public class GameManager : MonoBehaviour
     public void EndGame()
     {
 
-        //TODO: end the game... (this is not the CS)..
+        //end the game... (this is not the CS)..
         //this is for kicking the players out to possibly and endscreen/ the menu
 
         //destroy all game objects associated with the instance of the game
@@ -1129,8 +990,8 @@ public class GameManager : MonoBehaviour
         Destroy(GameMenu.instance);
         Destroy(PlayerLoader.instance);
         Destroy(EssentialsLoader.instance);
-        //TODO: for loop destroy other players
-        //TODO: destroy interaction points?
+        //TODO: @Yelsa for loop destroy other players
+        //TODO: @Yelsa destroy interaction points?
 
         //show the main menu
         launchMenu.SetActive(true);
@@ -1163,8 +1024,10 @@ public class GameManager : MonoBehaviour
         DialogueManager.instance.AutoPlayDialogue(lines, defaultAutoplayDelay, "readyToCheckAnswers");
     }
 
-    void EndGuessResumeGameCutscene()
+    public void EndGuessResumeGameCutscene(EndGuessEventData endGuessEventData)
     {
+
+        //TODO: @Yelsa use endGuessEventData to add data to the cutscene to share with the players
 
         string[] lines = new string[] { "n-Detective", "alright, good guesses everyone", "keep looking!" };
 
@@ -1174,10 +1037,17 @@ public class GameManager : MonoBehaviour
 
     }
 
-    void WinnerCutscene()
+    public void WinnerCutscene(EndGameData endGameData)
     {
 
-        string[] lines = new string[] { "n-Detective", "playerX wins!", "good work", "end of game"};
+        string winnerName = endGameData.winnerName;
+        string weapon = endGameData.weapon;
+        string suspect = endGameData.suspect;
+        string place = endGameData.place;
+
+        string[] lines = new string[] { "n-Detective", winnerName +" has solved the case!",
+            "It was " + suspect + " with the " + weapon + " in the " + place + "."
+            , "Good work detectives!"};
 
         DialogueManager.instance.AutoPlayDialogue(lines, defaultAutoplayDelay, "readyToEndGame");
 
@@ -1734,7 +1604,6 @@ public class AnswerCheckResponse
         this.isLocationCorrect = isLocationCorrect;
     }
 
-
 }
 
 
@@ -1820,7 +1689,35 @@ public class GamePrepData
 
     }
 
+}
 
+[Serializable]
+public class EndGameData
+{
+    public string winnerName;
+    public string weapon;
+    public string suspect;
+    public string place;
+
+    public EndGameData() { }
+
+    public EndGameData(string winnerName, string weapon, string suspect, string place)
+    {
+        this.winnerName = winnerName;
+        this.weapon = weapon;
+        this.suspect = suspect;
+        this.place = place;
+    }
+}
+
+[Serializable]
+public class EndGuessEventData
+{
+    //TODO: @Yelsa make this class with the data to share in the cutscene after the guess event
+
+    public EndGuessEventData() { }
+
+    //TODO: constructor with data
 
 }
 

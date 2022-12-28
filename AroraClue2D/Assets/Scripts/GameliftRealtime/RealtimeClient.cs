@@ -134,13 +134,12 @@ public class RealTimeClient
                 // This tells our client that the player has been accepted into the Game Session as a new player session.
                 Debug.Log("op code: Player accepted into game session!");
 
-                string numberOfPlayers = BytesToString(data.Data);
 
                 //tell player that they are accepted and waiting for match to start
                 GameManager.Instance.LoadingMatchUI(false);
 
                 //if the player is first to join, they are the host and they should prep the game
-                if(numberOfPlayers == "1")
+                if(dataString == "1")
                 {
                     GameManager.Instance.HostPrepGame();
                 }
@@ -152,10 +151,8 @@ public class RealTimeClient
 
                 Debug.Log("op code: call to fire match");
 
-                //TODO: get data from the call in the form of GamePrepData. contains weapon, suspect, place strings and a PlayerData[]
-                string jsonDataFromServer = BytesToString(data.Data);
-                //TODO: this should be set to the data from server
-                GamePrepData gamePrepData = JsonConvert.DeserializeObject<GamePrepData>(jsonDataFromServer);
+                //convert the data from the server into a gameprepdata object
+                GamePrepData gamePrepData = JsonConvert.DeserializeObject<GamePrepData>(dataString);
 
                 GameManager.Instance.SetupAfterMatchFound(gamePrepData);
 
@@ -174,81 +171,82 @@ public class RealTimeClient
 
                 break;
 
-            //TODO: I stopped here for christmas... code from here forward hasn't been checked, just labeled
+            
             //@Yelsa Step 8
             case GameManager.OP_START_GAME_S:
                 // The game start op tells our game clients that all players have joined and the game should start
-                Debug.Log("Start game op received...");
+                Debug.Log("op code: Start game ");
 
-                string startGameData = BytesToString(data.Data);
-                // Debug.Log(startGameData);
+                // start timer (check for host happens in the method)
+                GameManager.Instance.TimerUntilGuessEvent();
 
-                // Sets the opponent's id, in production should use their public username, not id.
-                StartMatch startMatch = JsonConvert.DeserializeObject<StartMatch>(startGameData);
-                OnRemotePlayerIdReceived(startMatch);
+                //tell all players to locally resume the investigation phase of the game
+                GameManager.Instance.LocalResume();
 
-                // This enables the draw card button so the game can be played.
-                GameStarted = true;
+
 
                 break;
-
-            //case GameManager.DRAW_CARD_ACK_OP:
-
-            //TODO: this is not in use. remove?
-
-            //    // A player has drawn a card.  To be received as an acknowledgement that a card was played,
-            //    // regardless of who played it, and update the UI accordingly.
-            //    Debug.Log("Player draw card ack...");
-
-            //    string data = BytesToString(e.Data);
-            //    // Debug.Log(data);
-
-            //    CardPlayed cardPlayedMessage = JsonConvert.DeserializeObject<CardPlayed>(data);
-            //    // Debug.Log(cardPlayedMessage.playedBy);
-            //    // Debug.Log(cardPlayedMessage.card);
-
-            //    OnCardPlayed(cardPlayedMessage);
-
-            //    break;
-
-
-            //@Yelsa Step 14b
-            case GameManager.OP_GAMEOVER_S:
-                // gives us the match results
-                Debug.Log("Game over op...");
-                
-                string gameoverData = BytesToString(data.Data);
-                // Debug.Log(gameoverData);
-
-                //MatchResults matchResults = JsonConvert.DeserializeObject<MatchResults>(gameoverData);
-
-                //OnGameOver(matchResults);
-
-                break;
-
-
 
             //@Yelsa Step 11
             case GameManager.OP_START_GUESS_EVENT_S:
+                //call received from server to start the guess event
+                Debug.Log("op code: Start guess event");
 
-                Debug.Log("Start guess event data received");
 
+                //start guess event locally
                 GameManager.Instance.GuessEvent();
 
                 break;
 
             //@Yelsa Step 14a
             case GameManager.OP_END_GUESS_EVENT_S:
+                //call received to end the guess event (all players are done guesses and there is not a winner)
+                Debug.Log("op code: end guess event");
 
-                Debug.Log("end guess event data received");
+                EndGuessEventData endGuessEventData = JsonConvert.DeserializeObject<EndGuessEventData>(dataString);
 
+                //TODO: @Yelsa add the data received from server as an object and use it in the cutscene to share info with players
+                GameManager.Instance.EndGuessResumeGameCutscene(endGuessEventData);
+
+                break;
+
+            //@Yelsa Step 14b
+            case GameManager.OP_GAMEOVER_S:
+                //call received from the server that a player has won
+                Debug.Log("op code: we have a winner. end the game.");
+                
+                //convert the data from the server into an EndGameData object
+                EndGameData endGameData = JsonConvert.DeserializeObject<EndGameData>(dataString);
+
+                //start the endgame cutscene with the data received
+                GameManager.Instance.WinnerCutscene(endGameData);
+
+
+                break;
+
+            //@Yelsa Step 14c
+            case GameManager.OP_HOLD_AFTER_GUESS_CHECKED_S:
+                //after player submits answer, if they receive this call back from the server,
+                //then it means not all answers are submitted.
+
+                Debug.Log("op code: hold for other players to answer");
+
+                //display UI to player telling them that they are waiting for all players to submit answers
+                GameManager.Instance.HoldForOtherPlayersAnswersUI(true);
 
                 break;
 
             //@YELSA Step 16  (should be same as back to step 8)
             case GameManager.OP_RESUME_GAME_S:
 
-                //TODO:
+                //message received from server that all players are ready to resume after guess event
+                Debug.Log("op code: resume game ");
+
+                // start timer (check for host happens in the method)
+                GameManager.Instance.TimerUntilGuessEvent();
+
+                //tell all players to locally resume the investigation phase of the game
+                GameManager.Instance.LocalResume();
 
                 break;
 

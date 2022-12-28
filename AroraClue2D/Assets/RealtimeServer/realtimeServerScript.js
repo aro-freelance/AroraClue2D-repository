@@ -46,6 +46,7 @@ const OP_END_GUESS_EVENT_S = 9;
 const OP_SET_PLAYER_INFO_S = 10;
 const OP_CHECK_ANSWERS_S = 11;
 const OP_PLAYER_MOVEMENT_S = 12;
+const OP_HOLD_AFTER_GUESS_CHECKED_S = 13;
 
 
 //messages player sends
@@ -77,7 +78,7 @@ let weapon = null;
 let suspect = null;
 let location = null;
 
-
+let winnerName = "Player";
 let gameover = false;
 
 
@@ -206,7 +207,9 @@ function onPlayerAccepted(player) {
         PlayerNumber: activePlayers.length,
         PlayerId: player.peerId,
         ReadyToStart: false,
-        ReadyToResume: false
+        ReadyToResume: false,
+        AnswerChecked: false,
+        IsWinner: false
 
     };
 
@@ -346,7 +349,13 @@ function onMessage(gameMessage) {
         //@Yelsa Step 10
         case OP_START_GUESS_EVENT:
 
-            //TODO:
+            //send all players the call to start the guess event
+            const startGuessEventMessage = session.newTextGameMessage(OP_START_GUESS_EVENT_S, session.getServerId(), "Start Guess Event");
+            session.getPlayers().forEach((player, playerId) => {
+                if (playerId != peerId) {
+                    session.sendReliableMessage(startGuessEventMessage, peerId);
+                }
+            });
 
             break;
 
@@ -354,14 +363,145 @@ function onMessage(gameMessage) {
         //@Yelsa Step 13
         case OP_CHECK_ANSWERS:
 
-            //TODO:
+            var weaponIsCorrect = false;
+            var suspectIsCorrect = false;
+            var placeIsCorrect = false;
+
+            var allAnswersChecked = true;
+
+            //server receives a guess (weapon, suspect, place) from player, and checks it against the correct answer
+            if (payload.submittedAnswer) {
+                if (payload.weaponGuess == selectedWeapon) {
+                    weaponIsCorrect = true;
+                }
+                if (payload.suspectGuess == selectedSuspect) {
+                    suspectIsCorrect = true;
+                }
+                if (payload.locationGuess == selectedPlace) {
+                    placeIsCorrect = true;
+                }
+
+
+                //TODO: also store some of this data to be shared among the players at the end of the guess event
+
+            }
+
+            //TODO: else statement to get information the player should know to share with the rest of the players
+
+            //if all aspects of the guess are correct, mark the player as the winner
+            if (weaponIsCorrect && suspectIsCorrect && placeIsCorrect) {
+
+                playerDataList.forEach((player) => {
+                    if (player.PlayerId == payload.playerId) {
+                        player.IsWinner = true;
+                        player.AnswerChecked = true;
+                        winnerName = player.PlayerName;
+                        gameover = true;
+                    }
+                });
+            }
+            //otherwise just mark the player as having answered
+            else {
+                playerDataList.forEach((player) => {
+                    if (player.PlayerId == payload.playerId) {
+                        player.AnswerChecked = true;
+                    }
+                });
+            }
+
+            //if there is a winner, send a message to all players to end the game. Include the correct answer and the winner name.
+            if (gameover) {
+
+                let endGameData = {
+                    winnerName: winnerName,
+                    weapon: selectedWeapon,
+                    suspect: selectedSuspect,
+                    place: selectedPlace
+                };
+
+                const gameOverMessage = session.newTextGameMessage(OP_GAMEOVER_S, session.getServerId(), JSON.stringify(endGameData));
+                session.getPlayers().forEach((player, playerId) => {
+                    if (playerId != peerId) {
+                        session.sendReliableMessage(gameOverMessage, peerId);
+                    }
+                });
+            }
+            //if there is no winner, send a message to player to enter waiting phase
+            else {
+                //if any players have not answered set allAnswersChecked to false
+                playerDataList.forEach((player) => {
+                    if (player.AnswerChecked == false) {
+                        allAnswersChecked = false;
+                    }
+                });
+
+                //if all have answered send message to all to end guess event
+                if (allAnswersChecked) {
+
+                    //TODO: each time a player checks an answer store the data
+                    //and then make an object here to send some of that data back to the players to use in the end guess cutscene
+                    //to share data among the players
+
+                    const guessEventEndMessage = session.newTextGameMessage(OP_END_GUESS_EVENT_S, session.getServerId(), "End Guess Event.");
+                    session.getPlayers().forEach((player, playerId) => {
+                        if (playerId != peerId) {
+                            session.sendReliableMessage(guessEventEndMessage, peerId);
+                        }
+                    });
+
+                }
+                //otherwise send a message to the player who just had their answers checked to let them know they are waiting for other players
+                else {
+
+                    const holdAfterAnswerSubmitMessage =
+                        session.newTextGameMessage(OP_HOLD_AFTER_GUESS_CHECKED_S, session.getServerId(), "Hold for other players to end Guess Event.");
+                    session.getPlayers().forEach((player, playerId) => {
+                        if (playerId != peerId) {
+                            session.sendReliableMessage(holdAfterAnswerSubmitMessage, peerId);
+                        }
+                    });
+
+                }
+
+            }
+
 
             break;
 
         //@Yelsa Step 15
         case OP_RESUME_GAME:
 
-            //TODO:
+            //server received a message from player that they are ready to continue after the guess event end cutscene
+
+            var allReadyToResume = true;
+
+            //set the player who sent the message to ready to resume
+            playerDataList.forEach((player) => {
+                if (player.playerId == payload.playerId) {
+                    player.ReadyToResume = true;
+                }
+            });
+
+            //check if all players are ready to resume
+            playerDataList.forEach((player) => {
+                if (player.ReadyToResume == false) {
+                    allReadyToResume = false;
+                }
+            });
+
+
+            //if all are ready to resume, send a message to all players to resume
+            if (allReadyToResume) {
+
+                const resumeMessage = session.newTextGameMessage(OP_RESUME_GAME_S, session.getServerId(), "Resume Game.");
+                session.getPlayers().forEach((player, playerId) => {
+                    if (playerId != peerId) {
+                        session.sendReliableMessage(resumeMessage, peerId);
+                    }
+                });
+
+            }
+            
 
             break;
 
@@ -393,23 +533,20 @@ function onMessage(gameMessage) {
 
                 //3. Then it should send that message to each player
 
-                //this sends a string, and we are sending an object... so use the other method for now?
-                //SendStringToClient(players, OP_PLAYER_MOVEMENT_S, movementMSG);
+                session.getPlayers().forEach((player, playerId) => {
+                    if (playerId != peerId) {
+                        session.sendReliableMessage(movementMSG, peerId);
+                    }
+                });
 
-                for (let index = 0; index < players.length; ++index) {
+                //for (let index = 0; index < players.length; ++index) {
 
-                    logger.info("Sending movement data to player " + players[index].peerId);
+                //    logger.info("Sending movement data to player " + players[index].peerId);
 
-                    session.sendReliableMessage(movementMSG, player[index].peerId);
+                //    session.sendReliableMessage(movementMSG, player[index].peerId);
 
-                }
+                //}
 
-
-                //TODO: remove
-                //this is for testing... just one message and then ending
-                logger.info("ENDING BECAUSE YOU PUT A TEST END HERE. case movement");
-                
-                gameoverCleanup();
 
                 break;
             }
@@ -417,76 +554,76 @@ function onMessage(gameMessage) {
     }
 }
 
-function checkGameOver() {
+//function checkGameOver() {
 
-    var gameCompletedPlayers = 0;
+//    var gameCompletedPlayers = 0;
 
-    /*
-    for (const [key, value] of Object.entries(cardPlays)) {
-        // has player made two plays
-        if (value.length == 2) {
-            gameCompletedPlayers++;
-        }
-    }*/
+//    /*
+//    for (const [key, value] of Object.entries(cardPlays)) {
+//        // has player made two plays
+//        if (value.length == 2) {
+//            gameCompletedPlayers++;
+//        }
+//    }*/
 
-    logger.info(gameCompletedPlayers);
+//    logger.info(gameCompletedPlayers);
 
-    // If at least two players completed two turns, signal game over.
-    // This partially handles the case where a player joins but leaves the game after one play or something,
-    // and another joins and plays two turns. Update for your game requirements.
-    if (gameCompletedPlayers >= 2) {
-        logger.info("setting game over...");
-        determineWinner();
-        gameover = true;
-    }
-}
+//    // If at least two players completed two turns, signal game over.
+//    // This partially handles the case where a player joins but leaves the game after one play or something,
+//    // and another joins and plays two turns. Update for your game requirements.
+//    if (gameCompletedPlayers >= 2) {
+//        logger.info("setting game over...");
+//        determineWinner();
+//        gameover = true;
+//    }
+//}
 
-// assumes both players played two cards
-function determineWinner() {
+//// assumes both players played two cards
+//function determineWinner() {
 
-    var result = {
-        playerOneId: "",
-        playerTwoId: "",
-        playerOneScore: "",
-        playerTwoScore: "",
-        winnerId: ""
-    }
+//    var result = {
+//        playerOneId: "",
+//        playerTwoId: "",
+//        playerOneScore: "",
+//        playerTwoScore: "",
+//        winnerId: ""
+//    }
 
-    var playersExamined = 0;
-    /*
-    for (const [key, value] of Object.entries(cardPlays)) {
-        // make sure we're only looking at players with two plays
-        if (value.length == 2) {
-            if (playersExamined == 0) {
-                result.playerOneId = key;
-                result.playerOneScore = value[0] + value[1];
-            } else if (playersExamined == 1) {
-                result.playerTwoId = key;
-                result.playerTwoScore = value[0] + value[1];
-            }
-            playersExamined++;
-        }
-    }
+//    var playersExamined = 0;
+//    /*
+//    for (const [key, value] of Object.entries(cardPlays)) {
+//        // make sure we're only looking at players with two plays
+//        if (value.length == 2) {
+//            if (playersExamined == 0) {
+//                result.playerOneId = key;
+//                result.playerOneScore = value[0] + value[1];
+//            } else if (playersExamined == 1) {
+//                result.playerTwoId = key;
+//                result.playerTwoScore = value[0] + value[1];
+//            }
+//            playersExamined++;
+//        }
+//    }
 
-    if (result.playerOneScore > result.playerTwoScore) {
-        result.winnerId = result.playerOneId;
-    } else if (result.playerOneScore < result.playerTwoScore) {
-        result.winnerId = result.playerTwoId;
-    } else if (result.playerOneScore == result.playerTwoScore) {
-        result.winnerId = "tie";
-    }
-    */
+//    if (result.playerOneScore > result.playerTwoScore) {
+//        result.winnerId = result.playerOneId;
+//    } else if (result.playerOneScore < result.playerTwoScore) {
+//        result.winnerId = result.playerTwoId;
+//    } else if (result.playerOneScore == result.playerTwoScore) {
+//        result.winnerId = "tie";
+//    }
+//    */
 
-    logger.info(result);
+//    logger.info(result);
 
-    // send out game over messages with winner
-    const gameoverMsg = session.newTextGameMessage(OP_GAMEOVER_S, session.getServerId(), JSON.stringify(result));
+//    // send out game over messages with winner
+//    const gameoverMsg = session.newTextGameMessage(OP_GAMEOVER_S, session.getServerId(), JSON.stringify(result));
 
-    for (let index = 0; index < players.length; ++index) {
-        logger.info("Sending game over message to player " + players[index].peerId);
-        session.sendReliableMessage(gameoverMsg, players[index].peerId);
-    }
-}
+//    for (let index = 0; index < players.length; ++index) {
+//        logger.info("Sending game over message to player " + players[index].peerId);
+//        session.sendReliableMessage(gameoverMsg, players[index].peerId);
+//    }
+//}
 
 // The cardPlays object looks like this:
 // {"eb051e15-1337-4071-b8a9-b9b0da32d7e2":[1,5],"27f87c33-c6f8-45f2-b403-801eaf4f4a2d":[5,6]}
