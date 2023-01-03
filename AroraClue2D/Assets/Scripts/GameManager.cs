@@ -10,6 +10,12 @@ using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using Unity.VisualScripting.Antlr3.Runtime;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Linq;
+using Aws.GameLift.Realtime;
 
 public class GameManager : MonoBehaviour
 {
@@ -87,6 +93,9 @@ public class GameManager : MonoBehaviour
     private RealTimeClient _realTimeClient;
     private APIManager _apiManager;
 
+
+    private const int DEFAULT_UDP_PORT = 8921;
+
     //after CS bools
     public bool isReadyToStartCountdown;
     public bool isReadyToCheckAnswers;
@@ -163,6 +172,7 @@ public class GameManager : MonoBehaviour
 
     // Lambda opcodes
     private const string REQUEST_FIND_MATCH_OP = "1";
+    private const string REQUEST_LOG_URL = "2";
 
 
     
@@ -1297,11 +1307,22 @@ public class GameManager : MonoBehaviour
 
     //use the response from the server (PlayerSessionObject) to create a Client to connect to a player session
     //@Yelsa Step 3
-    private void EstablishConnectionToRealtimeServer(PlayerSessionObject playerSessionObject)
+    private async void EstablishConnectionToRealtimeServer(PlayerSessionObject playerSessionObject)
     {
         Debug.Log("establish connection to server method called");
 
-        int localUdpPort = GetAvailableUdpPort();
+        int localUdpPort = FindAvailableUDPPort(DEFAULT_UDP_PORT, DEFAULT_UDP_PORT + 20);
+        //GetAvailableUdpPort();
+
+        if (localUdpPort == -1)
+        {
+            Debug.Log("Unable to find an open UDP listen port");
+            //yield break;
+        }
+        else
+        {
+            Debug.Log($"UDP listening on port: {localUdpPort}");
+        }
 
         var ipAddress = playerSessionObject.IpAddress;
         var playerSessionId = playerSessionObject.PlayerSessionId;
@@ -1323,6 +1344,11 @@ public class GameManager : MonoBehaviour
             //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
             LoadingMatchUI(false);
 
+            //@Yelsa... this is returning false... so we need to Connect the client.
+            //This is currently in the initialization, but that is clearly not working. move it here?
+            Debug.Log("realtimeclient exists. is connected? " + _realTimeClient.IsConnected());
+
+
             //_realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
             //_realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
 
@@ -1332,22 +1358,24 @@ public class GameManager : MonoBehaviour
 
             //_realTimeClient.GameOverEventHandler += OnGameOverEvent;
 
-            Debug.Log("realtimeclient: " + _realTimeClient);
+
+            // get the server logs
+            //call server to get log url
+            //FindMatch logUrlMessage = new FindMatch(REQUEST_LOG_URL, _playerId);
+            //string jsonPostData = JsonUtility.ToJson(logUrlMessage);
+
+            //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
+
+            //Debug.Log("log url response : " + response);
 
 
-            //TODO: @YELSA implement this method with server calls that work... to the server not the lambda?
+            //TODO: @YELSA implement this method with server calls that work
             /// note that at this point the player is connecting but reserved... they are then timing out after 1 minute. fix this issue
+            /// 
 
-            
 
-            //CheckIfHost();
 
-            
 
-            //we should turn this on... but it will not run until ready to true.. therefore we can
-            //add a ready make sure that all the players have joined? before we fire this off in Update.
-            
-            //_prepGame = true;
 
         }
         else
@@ -1484,11 +1512,27 @@ public class GameManager : MonoBehaviour
 
     public static int GetAvailableUdpPort()
     {
-        using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        socket.Bind(DefaultLoopbackEndpoint);
+        return ((IPEndPoint)socket.LocalEndPoint).Port;
+    }
+
+    // given a starting and ending range, finds an open UDP port to use as the listening port
+    private int FindAvailableUDPPort(int firstPort, int lastPort)
+    {
+        var UDPEndPoints = IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners();
+        List<int> usedPorts = new List<int>();
+        usedPorts.AddRange(from n in UDPEndPoints where n.Port >= firstPort && n.Port <= lastPort select n.Port);
+        usedPorts.Sort();
+        for (int testPort = firstPort; testPort <= lastPort; ++testPort)
+
         {
-            socket.Bind(DefaultLoopbackEndpoint);
-            return ((IPEndPoint)socket.LocalEndPoint).Port;
+            if (!usedPorts.Contains(testPort))
+            {
+                return testPort;
+            }
         }
+        return -1;
     }
 
     public void OnApplicationQuit()

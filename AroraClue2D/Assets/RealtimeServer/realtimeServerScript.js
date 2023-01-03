@@ -1,6 +1,6 @@
 ﻿// Based on source: https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script.html
 
-//ARORA 0.0.904
+//ARORA 0.0.9052
 
 //this handles player interactions on the server.  
 
@@ -69,14 +69,15 @@ let players = [];
 let playerDataList = [];
 
 //the game will start after there are this many active players connected
-let numberOfPlayersDesiredToFireMatch = 2;
+//@Yelsa TODO: change this... it is 1 for testing... should be at least 2 for production (should let player set it)
+let numberOfPlayersDesiredToFireMatch = 1;
 
 
 let serverConnected = false;
 
 let weapon = null;
 let suspect = null;
-let location = null;
+let place = null;
 
 let winnerName = "Player";
 let gameover = false;
@@ -106,7 +107,6 @@ function init(rtSession) {
     logger = session.getLogger();
     logger.info("init");
 
-    console.log("hello world. this is the realtimeserverscript");
 
 }
 
@@ -164,7 +164,19 @@ function onPlayerConnect(connectMsg) {
 
     let numberOfPlayers = players.length.toString;
 
-    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, connectMsg.player.peerId, numberOfPlayers);
+    //TODO: figure out why this is op code, id, data but ...
+    /*
+     * public class DataReceivedEventArgs : BaseEventArgs
+    {
+        public DataReceivedEventArgs(int sender, int opCode, byte[] data)
+            : base(sender, opCode, data)
+        {
+        }
+    }
+     */
+
+    //replaced second term. it was : connectMsg.player.peerId
+    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, session.getServerId(), numberOfPlayers);
     session.sendReliableMessage(msg, connectMsg.player.peerId);
 
 
@@ -193,9 +205,10 @@ function onPlayerAccepted(player) {
         }
     });
 
-    // This OP code is used in onPlayerConnected
-    //const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, player.peerId, "Peer " + player.peerId + " accepted");
-    //session.sendReliableMessage(msg, player.peerId);
+    // TODO: figure out ifi it is a problem that this is called twice... This OP code is used in onPlayerConnected
+    //replaced second term. it was : connectMsg.player.peerId
+    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, session.getServerId(), "Peer " + player.peerId + " accepted");
+    session.sendReliableMessage(msg, player.peerId);
     
     activePlayers++;
 
@@ -221,7 +234,7 @@ function onPlayerAccepted(player) {
     //@Yelsa if we are having problems we may need to make the host prep message async?
     //if there are enough active players and the server has received a message with random data from host to prep the game
     if (activePlayers == numberOfPlayersDesiredToFireMatch) {
-        if (selectedWeapon != null && selectedSuspect != null && selectedPlace != null) {
+        if (weapon != null && suspect != null && place != null) {
 
             serverConnected = true;
 
@@ -369,13 +382,13 @@ function onMessage(gameMessage) {
 
             //server receives a guess (weapon, suspect, place) from player, and checks it against the correct answer
             if (payload.submittedAnswer) {
-                if (payload.weaponGuess == selectedWeapon) {
+                if (payload.weaponGuess == weapon) {
                     weaponIsCorrect = true;
                 }
-                if (payload.suspectGuess == selectedSuspect) {
+                if (payload.suspectGuess == suspect) {
                     suspectIsCorrect = true;
                 }
-                if (payload.locationGuess == selectedPlace) {
+                if (payload.locationGuess == place) {
                     placeIsCorrect = true;
                 }
 

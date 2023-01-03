@@ -54,17 +54,22 @@ public class RealTimeClient
     /// <summary>
     /// Initialize a client for GameLift Realtime and connects to a player session.
     /// </summary> 
+    /// 
+    //@Yelsa we are working on making the Client active currently
     public RealTimeClient(string endpoint, int tcpPort, int localUdpPort, string playerSessionId, string connectionPayload, ConnectionType connectionType)
     {
         this.OnCloseReceived = false;
 
         // Create a client configuration to specify a secure or unsecure connection type
         // Best practice is to set up a secure connection using the connection type RT_OVER_WSS_DTLS_TLS12.
-        ClientConfiguration clientConfiguration = new ClientConfiguration()
-        {
-            // C# notation to set the field ConnectionType in the new instance of ClientConfiguration
-            ConnectionType = connectionType
-        };
+
+        ClientConfiguration clientConfiguration = ClientConfiguration.Default();
+
+        //ClientConfiguration clientConfiguration = new ClientConfiguration()
+        //{
+        //    // C# notation to set the field ConnectionType in the new instance of ClientConfiguration
+        //    ConnectionType = connectionType
+        //};
 
 
         Client = new Client(clientConfiguration);
@@ -77,8 +82,11 @@ public class RealTimeClient
         //Client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
 
         //@Yelsa  the token had null as payload parameter which is likely what was preventing player from being accepted as ACTIVE. Check back here whether RESERVED player status is still an issue.
-        ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(connectionPayload)); 
+        //ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(connectionPayload));
+        ConnectionToken token = new ConnectionToken(playerSessionId, null);
         Client.Connect(endpoint, tcpPort, localUdpPort, token);
+
+
 
 
     }
@@ -86,7 +94,7 @@ public class RealTimeClient
    
 
 
-    private void OnConnectionErrorEvent(object sender, Aws.GameLift.Realtime.Event.ErrorEventArgs e)
+    private void OnConnectionErrorEvent(object sender, ErrorEventArgs e)
     {
         if (Client.ConnectedAndReady)
         {
@@ -114,19 +122,19 @@ public class RealTimeClient
         switch (data.OpCode)
         {
 
-            //case Constants.PLAYER_CONNECT_OP_CODE:
+            case Constants.PLAYER_CONNECT_OP_CODE:
 
-            //    Debug.Log("on data received player connect op code");
+                Debug.Log("on data received player connect op code");
 
-            //    break;
+                break;
 
-            //case 200:
+            case 200:
 
-            //    Debug.Log("opcode 200. hello from the server " + dataString);
+                Debug.Log("opcode 200. hello from the server " + dataString);
 
-            //    break;
+                break;
 
-                //@Yelsa Step 4B
+            //@Yelsa Step 4B
             case GameManager.OP_CODE_PLAYER_ACCEPTED:
 
 
