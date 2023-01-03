@@ -140,7 +140,7 @@ function onHealthCheck() {
 // On Player Connect is called when a player has passed initial validation
 // Return true if player should connect, false to reject
 // This is hit before onPlayerAccepted
-//@Yelsa Step 4
+//@Yelsa Step 4A
 function onPlayerConnect(connectMsg) {
     logger.info("onPlayerConnect: ");
     logger.info(connectMsg);
@@ -159,7 +159,7 @@ function onPlayerConnect(connectMsg) {
     };
     logger.info(playerConnected);
 
-    //do this in onPlayerAccepted where we already have a player object
+    //do this in onPlayerAccepted where we already have a player object ?
     players.push(playerConnected);
 
     let numberOfPlayers = players.length.toString;
@@ -178,7 +178,8 @@ function onPlayerAccepted(player) {
     logger.info("onPlayerAccepted");
     logger.info(player);
 
-    players.push(player)
+    //this is done in onplayeraccepted ?
+    //players.push(player)
 
     players.forEach((playerInfo) => {
         logger.info("onPlayerAccepted players checking peerId");
@@ -192,9 +193,9 @@ function onPlayerAccepted(player) {
         }
     });
 
-    // This player was accepted -- let's send them a message
-    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, player.peerId, "Peer " + player.peerId + " accepted");
-    session.sendReliableMessage(msg, player.peerId);
+    // This OP code is used in onPlayerConnected
+    //const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, player.peerId, "Peer " + player.peerId + " accepted");
+    //session.sendReliableMessage(msg, player.peerId);
     
     activePlayers++;
 
@@ -220,7 +221,7 @@ function onPlayerAccepted(player) {
     //@Yelsa if we are having problems we may need to make the host prep message async?
     //if there are enough active players and the server has received a message with random data from host to prep the game
     if (activePlayers == numberOfPlayersDesiredToFireMatch) {
-        if (selectedWeapon != null && selectedSuspect != && selectedPlace != null) {
+        if (selectedWeapon != null && selectedSuspect != null && selectedPlace != null) {
 
             serverConnected = true;
 
@@ -249,12 +250,13 @@ function onPlayerAccepted(player) {
                     logger.info("Sending prep match message...");
                     logger.info(gameStartPayload);
 
-                    // send out the match has started along with the opponent's playerId
 
                     //@Yelsa Step 5b message sent here
                     //start the prep phase if we have enough players
-                    const startMatchMessage = session.newTextGameMessage(OP_PREP_GAME_S, session.getServerId(), JSON.stringify(gameStartPayload));
-                    session.sendReliableMessage(startMatchMessage, playerSession.peerId);
+                    const startMatchMessage = session.newTextGameMessage(OP_FIRE_MATCH_S, session.getServerId(), JSON.stringify(gameStartPayload));
+                    session.getPlayers().forEach((playerId) => {
+                        session.sendReliableMessage(startMatchMessage, playerId);
+                    });
 
                 });
             });
@@ -336,10 +338,8 @@ function onMessage(gameMessage) {
             if (allReady) {
 
                 const readyMessage = session.newTextGameMessage(OP_START_GAME_S, session.getServerId(), "All Ready. Start Game.");
-                session.getPlayers().forEach((player, playerId) => {
-                    if (playerId != peerId) {
-                        session.sendReliableMessage(readyMessage, peerId);
-                    }
+                session.getPlayers().forEach((playerId) => {
+                    session.sendReliableMessage(readyMessage, playerId);
                 });
 
             }
@@ -351,10 +351,8 @@ function onMessage(gameMessage) {
 
             //send all players the call to start the guess event
             const startGuessEventMessage = session.newTextGameMessage(OP_START_GUESS_EVENT_S, session.getServerId(), "Start Guess Event");
-            session.getPlayers().forEach((player, playerId) => {
-                if (playerId != peerId) {
-                    session.sendReliableMessage(startGuessEventMessage, peerId);
-                }
+            session.getPlayers().forEach((playerId) => {
+                session.sendReliableMessage(startGuessEventMessage, playerId);
             });
 
             break;
@@ -410,6 +408,7 @@ function onMessage(gameMessage) {
             }
 
             //if there is a winner, send a message to all players to end the game. Include the correct answer and the winner name.
+            //@Yelsa Step 14B
             if (gameover) {
 
                 let endGameData = {
@@ -420,10 +419,8 @@ function onMessage(gameMessage) {
                 };
 
                 const gameOverMessage = session.newTextGameMessage(OP_GAMEOVER_S, session.getServerId(), JSON.stringify(endGameData));
-                session.getPlayers().forEach((player, playerId) => {
-                    if (playerId != peerId) {
-                        session.sendReliableMessage(gameOverMessage, peerId);
-                    }
+                session.getPlayers().forEach((playerId) => {
+                    session.sendReliableMessage(gameOverMessage, playerId);
                 });
             }
             //if there is no winner, send a message to player to enter waiting phase
@@ -436,6 +433,7 @@ function onMessage(gameMessage) {
                 });
 
                 //if all have answered send message to all to end guess event
+                //@Yelsa Step 14A
                 if (allAnswersChecked) {
 
                     //TODO: each time a player checks an answer store the data
@@ -443,21 +441,20 @@ function onMessage(gameMessage) {
                     //to share data among the players
 
                     const guessEventEndMessage = session.newTextGameMessage(OP_END_GUESS_EVENT_S, session.getServerId(), "End Guess Event.");
-                    session.getPlayers().forEach((player, playerId) => {
-                        if (playerId != peerId) {
-                            session.sendReliableMessage(guessEventEndMessage, peerId);
-                        }
+                    session.getPlayers().forEach((playerId) => {
+                        session.sendReliableMessage(guessEventEndMessage, playerId);
                     });
 
                 }
                 //otherwise send a message to the player who just had their answers checked to let them know they are waiting for other players
+                //@Yelsa Step 14C
                 else {
 
                     const holdAfterAnswerSubmitMessage =
                         session.newTextGameMessage(OP_HOLD_AFTER_GUESS_CHECKED_S, session.getServerId(), "Hold for other players to end Guess Event.");
-                    session.getPlayers().forEach((player, playerId) => {
-                        if (playerId != peerId) {
-                            session.sendReliableMessage(holdAfterAnswerSubmitMessage, peerId);
+                    session.getPlayers().forEach((playerId) => {
+                        if (playerId == payload.playerId) {
+                            session.sendReliableMessage(holdAfterAnswerSubmitMessage, playerId);
                         }
                     });
 
@@ -468,7 +465,7 @@ function onMessage(gameMessage) {
 
             break;
 
-        //@Yelsa Step 15
+        //@Yelsa Step 16
         case OP_RESUME_GAME:
 
             //server received a message from player that they are ready to continue after the guess event end cutscene
@@ -494,10 +491,8 @@ function onMessage(gameMessage) {
             if (allReadyToResume) {
 
                 const resumeMessage = session.newTextGameMessage(OP_RESUME_GAME_S, session.getServerId(), "Resume Game.");
-                session.getPlayers().forEach((player, playerId) => {
-                    if (playerId != peerId) {
-                        session.sendReliableMessage(resumeMessage, peerId);
-                    }
+                session.getPlayers().forEach((playerId) => {
+                    session.sendReliableMessage(resumeMessage, playerId);
                 });
 
             }
@@ -505,21 +500,31 @@ function onMessage(gameMessage) {
 
             break;
 
-        //@Yelsa Step 17
+        //@Yelsa Step 19
         case OP_PLAYER_MOVEMENT:
             {
-                //when the server receives movement data from the player 
-               
-                
+                //when the server receives movement data from the player
+
+
                 //1. the server make a PlayerMovementData object to send back to players
                 // this object will contain location and id data from the player who sent it
-                
+
+                var playerNumber = null;
+
+                playerDataList.forEach((player) => {
+
+                    if (player.PlayerId == payload.playerId) {
+                        playerNumber = player.PlayerNumber;
+                    }
+
+                });
+
 
                 let movementData = {
                     playerXPosition: payload.playerXPosition,
                     playerYPosition: payload.playerYPosition,
                     playerZPosition: payload.playerZPosition,
-                    playerId: payload.playerId
+                    playerNumber: playerNumber
                 };
 
                 logger.info("movement data")
@@ -533,9 +538,9 @@ function onMessage(gameMessage) {
 
                 //3. Then it should send that message to each player
 
-                session.getPlayers().forEach((player, playerId) => {
-                    if (playerId != peerId) {
-                        session.sendReliableMessage(movementMSG, peerId);
+                session.getPlayers().forEach((playerId) => {
+                    if (playerId != payload.playerId) {
+                        session.sendReliableMessage(movementMSG, playerId);
                     }
                 });
 

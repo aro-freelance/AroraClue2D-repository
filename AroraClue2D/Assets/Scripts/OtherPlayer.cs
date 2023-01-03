@@ -9,7 +9,7 @@ public class OtherPlayer : MonoBehaviour
 
 
     //name
-    public string name;
+    public string playerName;
 
     //playerid
     public string playerId;
@@ -29,10 +29,10 @@ public class OtherPlayer : MonoBehaviour
 
     public OtherPlayer() { }
 
-    public OtherPlayer(string name, string playerID, int playerNumber, Sprite sprite, Vector3 location, bool isFriend, bool isBlocked)
+    public OtherPlayer(string playerName, string playerID, int playerNumber, Sprite sprite, Vector3 location, bool isFriend, bool isBlocked)
     {
 
-        this.name = name;
+        this.playerName = playerName;
         this.playerId = playerID;
         this.playerNumber = playerNumber;
         this.sprite = sprite;

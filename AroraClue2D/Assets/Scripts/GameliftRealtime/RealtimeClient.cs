@@ -24,7 +24,7 @@ using Newtonsoft.Json;
  */
 public class RealTimeClient
 {
-    public Aws.GameLift.Realtime.Client Client { get; private set; }
+    public Client Client { get; private set; }
 
     public bool OnCloseReceived { get; private set; }
     public bool GameStarted = false;
@@ -32,22 +32,22 @@ public class RealTimeClient
 
     //need handlers for each event handled by server
     //players connected?
-    public event EventHandler<RemotePlayerIdEventArgs> RemotePlayerIdEventHandler;
-    //gameover
-    public event EventHandler<GameOverEventArgs> GameOverEventHandler;
+    //public event EventHandler<RemotePlayerIdEventArgs> RemotePlayerIdEventHandler;
+    ////gameover
+    //public event EventHandler<GameOverEventArgs> GameOverEventHandler;
 
-    ////start timer guess event
-    //public event EventHandler<StartTimerGuessEventArgs> StartTimerGuessEventHandler;
-    ////start countdown for submition
-    //public event EventHandler<StartGuessCountdownArgs> StartGuessCountdownEventHandler;
+    //////start timer guess event
+    ////public event EventHandler<StartTimerGuessEventArgs> StartTimerGuessEventHandler;
+    //////start countdown for submition
+    ////public event EventHandler<StartGuessCountdownArgs> StartGuessCountdownEventHandler;
 
-    //StartGame handler needs to be added... it should find the player list, assign sprites to the players, choose a host,
-    //host should roll the random stuff start the timer
+    ////StartGame handler needs to be added... it should find the player list, assign sprites to the players, choose a host,
+    ////host should roll the random stuff start the timer
 
-    //check answers
-    public event EventHandler<CheckAnswersArgs> CheckAnswersEventHandler;
-    //player movement/location
-    public event EventHandler<PlayerMovementArgs> PlayerMovementEventHandler;
+    ////check answers
+    //public event EventHandler<CheckAnswersArgs> CheckAnswersEventHandler;
+    ////player movement/location
+    //public event EventHandler<PlayerMovementArgs> PlayerMovementEventHandler;
 
 
 
@@ -70,11 +70,11 @@ public class RealTimeClient
         Client = new Client(clientConfiguration);
 
 
-        Client.ConnectionOpen += new EventHandler(OnOpenEvent);
-        Client.ConnectionClose += new EventHandler(OnCloseEvent);
-        //Client.GroupMembershipUpdated += new EventHandler<GroupMembershipEventArgs>(OnGroupMembershipUpdate);
-        Client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
-        Client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
+        //Client.ConnectionOpen += new EventHandler(OnOpenEvent);
+        //Client.ConnectionClose += new EventHandler(OnCloseEvent);
+        ////Client.GroupMembershipUpdated += new EventHandler<GroupMembershipEventArgs>(OnGroupMembershipUpdate);
+        //Client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
+        //Client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
 
         //@Yelsa  the token had null as payload parameter which is likely what was preventing player from being accepted as ACTIVE. Check back here whether RESERVED player status is still an issue.
         ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(connectionPayload)); 
@@ -114,20 +114,19 @@ public class RealTimeClient
         switch (data.OpCode)
         {
 
-            case Constants.PLAYER_CONNECT_OP_CODE:
+            //case Constants.PLAYER_CONNECT_OP_CODE:
 
-                Debug.Log("on data received player connect op code");
+            //    Debug.Log("on data received player connect op code");
 
-                break;
+            //    break;
 
-            case 200:
-                //TODO: use this to establish connection to the game session after it is created
+            //case 200:
 
-                Debug.Log("opcode 200. hello from the server " + dataString);
+            //    Debug.Log("opcode 200. hello from the server " + dataString);
 
-                break;
+            //    break;
 
-                //@Yelsa Step 4.5
+                //@Yelsa Step 4B
             case GameManager.OP_CODE_PLAYER_ACCEPTED:
 
 
@@ -138,15 +137,15 @@ public class RealTimeClient
                 //tell player that they are accepted and waiting for match to start
                 GameManager.Instance.LoadingMatchUI(false);
 
-                //if the player is first to join, they are the host and they should prep the game
-                if(dataString == "1")
-                {
-                    GameManager.Instance.HostPrepGame();
-                }
+
+                //set the player number in the game manager based on the data received.
+                //then in that method if the playerNumber is 1 also run HostPrepGame
+                GameManager.Instance.SetPlayerNumber(dataString);
 
 
                 break;
 
+            //@Yelsa Step 6
             case GameManager.OP_FIRE_MATCH_S:
 
                 Debug.Log("op code: call to fire match");
@@ -159,18 +158,6 @@ public class RealTimeClient
 
                 break;
 
-
-            case GameManager.OP_SET_PLAYER_INFO_S:
-                Debug.Log("get host data received");
-
-                break;
-
-
-            case GameManager.OP_PREP_GAME_S:
-                Debug.Log("prep game data received");
-
-                break;
-
             
             //@Yelsa Step 8
             case GameManager.OP_START_GAME_S:
@@ -178,7 +165,7 @@ public class RealTimeClient
                 Debug.Log("op code: Start game ");
 
                 // start timer (check for host happens in the method)
-                GameManager.Instance.TimerUntilGuessEvent();
+                GameManager.Instance.StartTimer();
 
                 //tell all players to locally resume the investigation phase of the game
                 GameManager.Instance.LocalResume();
@@ -198,7 +185,7 @@ public class RealTimeClient
 
                 break;
 
-            //@Yelsa Step 14a
+            //@Yelsa Step 15a
             case GameManager.OP_END_GUESS_EVENT_S:
                 //call received to end the guess event (all players are done guesses and there is not a winner)
                 Debug.Log("op code: end guess event");
@@ -210,7 +197,7 @@ public class RealTimeClient
 
                 break;
 
-            //@Yelsa Step 14b
+            //@Yelsa Step 15b
             case GameManager.OP_GAMEOVER_S:
                 //call received from the server that a player has won
                 Debug.Log("op code: we have a winner. end the game.");
@@ -224,7 +211,7 @@ public class RealTimeClient
 
                 break;
 
-            //@Yelsa Step 14c
+            //@Yelsa Step 15c
             case GameManager.OP_HOLD_AFTER_GUESS_CHECKED_S:
                 //after player submits answer, if they receive this call back from the server,
                 //then it means not all answers are submitted.
@@ -236,14 +223,14 @@ public class RealTimeClient
 
                 break;
 
-            //@YELSA Step 16  (should be same as back to step 8)
+            //@YELSA Step 17  (should be same as back to step 8)
             case GameManager.OP_RESUME_GAME_S:
 
                 //message received from server that all players are ready to resume after guess event
                 Debug.Log("op code: resume game ");
 
                 // start timer (check for host happens in the method)
-                GameManager.Instance.TimerUntilGuessEvent();
+                GameManager.Instance.StartTimer();
 
                 //tell all players to locally resume the investigation phase of the game
                 GameManager.Instance.LocalResume();
@@ -251,19 +238,16 @@ public class RealTimeClient
                 break;
 
             //Receive movement data from server for another player's location
-            //@Yelsa Step 18
+            //@Yelsa Step 20
             case GameManager.OP_PLAYER_MOVEMENT_S:
 
                 Debug.Log("realtimeclient: player movement received in switch");
                 PlayerMovementData playerMovementData = JsonConvert.DeserializeObject<PlayerMovementData>(dataString);
 
-                //OnPlayerMovement(playerMovementData);
-
-                //TODO: use this data to set the position of player whose id was received 
-                //... unless it is this player's id... should update server code to not send it to the player whose id it is
-
+                //use this data to set the position of player whose id was received 
+                GameManager.Instance.SetReceivedMovement(playerMovementData);
+                    
                 break;
-
 
             
 
@@ -299,18 +283,18 @@ public class RealTimeClient
     //    }
     //}
 
-    protected virtual void OnRemotePlayerIdReceived(StartMatch startMatch)
-    {
-        Debug.Log("OnRemotePlayerIdReceived");
+    //protected virtual void OnRemotePlayerIdReceived(StartMatch startMatch)
+    //{
+    //    Debug.Log("OnRemotePlayerIdReceived");
 
-        RemotePlayerIdEventArgs remotePlayerIdEventArgs = new RemotePlayerIdEventArgs(startMatch);
+    //    RemotePlayerIdEventArgs remotePlayerIdEventArgs = new RemotePlayerIdEventArgs(startMatch);
 
-        EventHandler<RemotePlayerIdEventArgs> handler = RemotePlayerIdEventHandler;
-        if (handler != null)
-        {
-            handler(this, remotePlayerIdEventArgs);
-        }
-    }
+    //    EventHandler<RemotePlayerIdEventArgs> handler = RemotePlayerIdEventHandler;
+    //    if (handler != null)
+    //    {
+    //        handler(this, remotePlayerIdEventArgs);
+    //    }
+    //}
 
     //protected virtual void OnGameOver(MatchResults matchResults)
     //{
@@ -325,48 +309,48 @@ public class RealTimeClient
     //    }
     //}
 
-    protected virtual void OnPlayerMovement(PlayerMovementData playerMovementData)
-    {
-        PlayerMovementArgs playerMovementArgs = new PlayerMovementArgs(
-            playerMovementData.playerXPosition,
-            playerMovementData.playerYPosition,
-            playerMovementData.playerZPosition,
-            playerMovementData.playerId
-            );
+    //protected virtual void OnPlayerMovement(PlayerMovementData playerMovementData)
+    //{
+    //    PlayerMovementArgs playerMovementArgs = new PlayerMovementArgs(
+    //        playerMovementData.playerXPosition,
+    //        playerMovementData.playerYPosition,
+    //        playerMovementData.playerZPosition,
+    //        playerMovementData.playerId
+    //        );
 
-        EventHandler<PlayerMovementArgs> handler = PlayerMovementEventHandler;
+    //    EventHandler<PlayerMovementArgs> handler = PlayerMovementEventHandler;
 
-        if (handler != null)
-        {
-            handler(this, playerMovementArgs);
-        }
-        else
-        {
-            Debug.Log("movement handler is null");
-        }
+    //    if (handler != null)
+    //    {
+    //        handler(this, playerMovementArgs);
+    //    }
+    //    else
+    //    {
+    //        Debug.Log("movement handler is null");
+    //    }
 
-    }
+    //}
 
-    protected virtual void OnPlayerGuess(PlayerGuessData playerGuessData)
-    {
+    //protected virtual void OnPlayerGuess(PlayerGuessData playerGuessData)
+    //{
 
-        CheckAnswersArgs checkAnswersArgs = new CheckAnswersArgs(
-            playerGuessData.weapon, 
-            playerGuessData.suspect,
-            playerGuessData.place,
-            playerGuessData.playerId,
-            playerGuessData.guessedOnTime
-            );
+    //    CheckAnswersArgs checkAnswersArgs = new CheckAnswersArgs(
+    //        playerGuessData.weapon, 
+    //        playerGuessData.suspect,
+    //        playerGuessData.place,
+    //        playerGuessData.playerId,
+    //        playerGuessData.guessedOnTime
+    //        );
 
-        EventHandler<CheckAnswersArgs> handler = CheckAnswersEventHandler;
+    //    EventHandler<CheckAnswersArgs> handler = CheckAnswersEventHandler;
 
-        if (handler != null)
-        {
-            handler(this, checkAnswersArgs);
-        }
+    //    if (handler != null)
+    //    {
+    //        handler(this, checkAnswersArgs);
+    //    }
 
 
-    }
+    //}
 
     /// <summary>
     /// Example of sending to a custom message to the server.
@@ -441,25 +425,25 @@ public class RealTimeClient
 }
 
 
-public class RemotePlayerIdEventArgs : EventArgs
-{
-    public string remotePlayerId { get; set; }
+//public class RemotePlayerIdEventArgs : EventArgs
+//{
+//    public string remotePlayerId { get; set; }
 
-    public RemotePlayerIdEventArgs(StartMatch startMatch)
-    {
-        this.remotePlayerId = startMatch.remotePlayerId;
-    }
-}
+//    public RemotePlayerIdEventArgs(StartMatch startMatch)
+//    {
+//        this.remotePlayerId = startMatch.remotePlayerId;
+//    }
+//}
 
-public class GameOverEventArgs : EventArgs
-{
-    //public MatchResults matchResults { get; set; }
+//public class GameOverEventArgs : EventArgs
+//{
+//    //public MatchResults matchResults { get; set; }
 
-    //public GameOverEventArgs(MatchResults matchResults)
-    //{
-    //    this.matchResults = matchResults;
-    //}
-}
+//    //public GameOverEventArgs(MatchResults matchResults)
+//    //{
+//    //    this.matchResults = matchResults;
+//    //}
+//}
 
 
 
@@ -472,58 +456,58 @@ public class GameOverEventArgs : EventArgs
 //after a player clicks submit, check to see if we have answers from all players
 // if we have answers from all players, or the timer is ended, check the answers
 // and return a bool with whether there is a winner and who the winner is by playerId 
-public class CheckAnswersArgs : EventArgs
-{
+//public class CheckAnswersArgs : EventArgs
+//{
 
 
-    public string currentAnswerWeapon { get; set; }
-    public string currentAnswerSuspect { get; set; }
-    public string currentAnswerLocation { get; set; }
+//    public string currentAnswerWeapon { get; set; }
+//    public string currentAnswerSuspect { get; set; }
+//    public string currentAnswerLocation { get; set; }
 
-    public string currentAnswerPlayerId { get; set; }
+//    public string currentAnswerPlayerId { get; set; }
 
-    public bool guessedOnTime { get; set; }
+//    public bool guessedOnTime { get; set; }
 
-    public CheckAnswersArgs(
-        string currentAnswerWeapon, 
-        string currentAnswerSuspect,
-        string currentAnswerLocation,
-        string currentAnswerPlayerId,
-        bool guessedOnTime)
-    {
-        this.currentAnswerWeapon = currentAnswerWeapon;
-        this.currentAnswerSuspect = currentAnswerSuspect;
-        this.currentAnswerLocation = currentAnswerLocation;
-        this.currentAnswerPlayerId = currentAnswerPlayerId;
-        this.guessedOnTime = guessedOnTime;
-     }
+//    public CheckAnswersArgs(
+//        string currentAnswerWeapon, 
+//        string currentAnswerSuspect,
+//        string currentAnswerLocation,
+//        string currentAnswerPlayerId,
+//        bool guessedOnTime)
+//    {
+//        this.currentAnswerWeapon = currentAnswerWeapon;
+//        this.currentAnswerSuspect = currentAnswerSuspect;
+//        this.currentAnswerLocation = currentAnswerLocation;
+//        this.currentAnswerPlayerId = currentAnswerPlayerId;
+//        this.guessedOnTime = guessedOnTime;
+//     }
 
-}
+//}
 
 
 
 //tracks location of each player
-public class PlayerMovementArgs: EventArgs
-{
+//public class PlayerMovementArgs: EventArgs
+//{
 
-    public float playerXLocation { get; set; }
-    public float playerYLocation { get; set; }
-    public float playerZLocation { get; set; }
-    public string playerId { get; set; }
-
-
-    public PlayerMovementArgs(float playerXLocation, float playerYLocation, float playerZLocation, string playerId) {
-
-        this.playerXLocation = playerXLocation;
-        this.playerYLocation = playerYLocation;
-        this.playerZLocation = playerZLocation;
-        this.playerId = playerId;
-
-    }
+//    public float playerXLocation { get; set; }
+//    public float playerYLocation { get; set; }
+//    public float playerZLocation { get; set; }
+//    public string playerId { get; set; }
 
 
+//    public PlayerMovementArgs(float playerXLocation, float playerYLocation, float playerZLocation, string playerId) {
 
-}
+//        this.playerXLocation = playerXLocation;
+//        this.playerYLocation = playerYLocation;
+//        this.playerZLocation = playerZLocation;
+//        this.playerId = playerId;
+
+//    }
+
+
+
+//}
 
 
 

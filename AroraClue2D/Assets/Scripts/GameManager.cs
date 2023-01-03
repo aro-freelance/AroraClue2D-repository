@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour
 
 
 
-    public int currentMoney;
+    //public int currentMoney;
 
     //count up from this value to the guessInterval.. to trigger a guess event (minutes)
     private float timer = 0;
@@ -98,10 +98,11 @@ public class GameManager : MonoBehaviour
     public bool isWinner = false;
 
     private string _playerId;
-    private string _remotePlayerId = "";
+
+    //private string _remotePlayerId = "";
 
     //TODO: figure out wtf this is for
-    private bool _updateRemotePlayerId = false; 
+    //private bool _updateRemotePlayerId = false; 
 
     // turned on in the player controller when the player is moving.
     // used to send player location to server so it can be sent to other players
@@ -116,14 +117,14 @@ public class GameManager : MonoBehaviour
 
     //gamestates
     private bool _findingMatch = false;
-    private bool _prepGame = false;
-    private bool _startGame = false;
-    private bool _gameOver = false;
+    //private bool _prepGame = false;
+    //private bool _startGame = false;
+    //private bool _gameOver = false;
 
-    private bool _startGuessEvent = false;
-    private bool _startCountdown = false;
-    private bool _endGuessEvent = false;
-    private bool _resumeGameAfterGuessEvent = false;
+    //private bool _startGuessEvent = false;
+    //private bool _startCountdown = false;
+    //private bool _endGuessEvent = false;
+    //private bool _resumeGameAfterGuessEvent = false;
 
 
     //messages server sends
@@ -181,10 +182,25 @@ public class GameManager : MonoBehaviour
         _sqsMessageProcessing = FindObjectOfType<SQSMessageProcessing>();
 
 
-        _playerId = System.Guid.NewGuid().ToString();
+        _playerId = Guid.NewGuid().ToString();
 
 
 
+
+    }
+
+    //@Yelsa Step 4B
+    public void SetPlayerNumber(String data)
+    {
+
+        playerNumber = int.Parse(data);
+
+        Debug.Log("player number set. " + playerNumber);
+
+        if(playerNumber == 1)
+        {
+            HostPrepGame();
+        }
 
     }
 
@@ -328,7 +344,9 @@ public class GameManager : MonoBehaviour
         //launchMenu.SetActive(false);
 
         ///4. Tell the server the player is ready to start
-        ThisPlayerIsReadyToStart();
+        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+
+        _realTimeClient.SendMessage(OP_START_GAME, realtimePayload);
 
     }
 
@@ -402,11 +420,11 @@ public class GameManager : MonoBehaviour
             _realTimeClient.GameStarted = false;
         }
 
-        if (_updateRemotePlayerId)
-        {
-            _updateRemotePlayerId = false;
-            //update UI?
-        }
+        //if (_updateRemotePlayerId)
+        //{
+        //    _updateRemotePlayerId = false;
+        //    //update UI?
+        //}
 
         
         // the player is moving, send data to server to display to other players
@@ -478,13 +496,13 @@ public class GameManager : MonoBehaviour
         {
             TimerUntilGuessEvent();
         }
-        else
-        {
-            if (timer == 0)
-            {
-                timerRunning = true;
-            }
-        }
+        //else
+        //{
+        //    if (timer == 0)
+        //    {
+        //        timerRunning = true;
+        //    }
+        //}
 
         //when the local countdown is running this will be turned on
         if (countdownRunning)
@@ -510,6 +528,8 @@ public class GameManager : MonoBehaviour
                 float timeRemaining = guessInterval - timer;
                 if (timeRemaining <= 0)
                 {
+                    timerRunning = false;
+
                     //@Yelsa Step 9
                     HostStartGuessEvent();
                 }
@@ -539,7 +559,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    //@Yelsa Step 17
+    //@Yelsa Step 18
     private void SendMovement(float x, float y, float z)
     {
         Debug.Log("pos : " + x + "," + y + "," + z);
@@ -552,7 +572,71 @@ public class GameManager : MonoBehaviour
         lastSentX = x;
         lastSentY = y;
         lastSentZ = z;
+    }
 
+    //@Yelsa Step 20
+    public void SetReceivedMovement(PlayerMovementData playerMovementData)
+    {
+
+        //use the movement data received from server to set the position and movement of the apropriate sprite
+        var playerNumberReceived = playerMovementData.playerNumber;
+
+        //double check that the local player is not moved... shouldn't happen but just to be sure
+        if(playerNumberReceived != playerNumber)
+        {
+            var position = new Vector3(playerMovementData.playerXPosition,
+                    playerMovementData.playerYPosition, playerMovementData.playerZPosition);
+
+            //move the correct sprite to the position received
+            switch (playerNumberReceived)
+            {
+                case 1:
+
+                    playerOneObject.transform.position = position;
+
+                    break;
+
+                case 2:
+
+                    playerTwoObject.transform.position = position;
+
+                    break;
+
+                case 3:
+
+                    playerThreeObject.transform.position = position;
+
+                    break;
+
+                case 4:
+
+                    playerFourObject.transform.position = position;
+
+                    break;
+
+                case 5:
+
+                    playerFiveObject.transform.position = position;
+
+                    break;
+
+                case 6:
+
+                    playerSixObject.transform.position = position;
+
+                    break;
+
+                default:
+
+                    break;
+            }
+
+        }
+        else
+        {
+            Debug.Log("received movement data from server for the local player." +
+                "fix the way the server is sending the data so it isn't sent back to the same player.");
+        }
 
     }
 
@@ -629,26 +713,26 @@ public class GameManager : MonoBehaviour
 
 
 
-    //call this in onDataReceived if the eerver returns that the player has the correct answer
-    void ThisPlayerHasCorrectAnswer()
-    {
+    ////call this in onDataReceived if the eerver returns that the player has the correct answer
+    //void ThisPlayerHasCorrectAnswer()
+    //{
 
-        //GameEventToServer thisPlayerWon = new GameEventToServer("209", _playerId);
+    //    //GameEventToServer thisPlayerWon = new GameEventToServer("209", _playerId);
         
-        //string jsonData = JsonUtility.ToJson(thisPlayerWon);
+    //    //string jsonData = JsonUtility.ToJson(thisPlayerWon);
 
 
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    //    //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+    //    RealtimePayload realtimePayload = new RealtimePayload(_playerId);
 
-        _realTimeClient.SendMessage(OP_GAMEOVER, realtimePayload);
+    //    _realTimeClient.SendMessage(OP_GAMEOVER, realtimePayload);
 
-        //when players recieve this message they will run the method to end the game
+    //    //when players recieve this message they will run the method to end the game
 
-    }
+    //}
 
-    //@Yelsa Step 14a
+    //@Yelsa Step 15a
     void ThisPlayerIsReadyToContinueAfterGuessEvent()
     {
 
@@ -713,7 +797,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    playerOneObject.transform.position = new Vector3(4, -3, transform.position.z);
+                    playerTwoObject.transform.position = new Vector3(4, -3, transform.position.z);
                 }
 
                 break;
@@ -726,7 +810,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    playerOneObject.transform.position = new Vector3(-1, -3, transform.position.z);
+                    playerThreeObject.transform.position = new Vector3(-1, -3, transform.position.z);
                 }
 
                 break;
@@ -739,7 +823,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    playerOneObject.transform.position = new Vector3(-4, -3, transform.position.z);
+                    playerFourObject.transform.position = new Vector3(-4, -3, transform.position.z);
                 }
 
                 break;
@@ -751,7 +835,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    playerOneObject.transform.position = new Vector3(-4, -3, transform.position.z);
+                    playerFiveObject.transform.position = new Vector3(-4, -3, transform.position.z);
                 }
 
                 break;
@@ -763,7 +847,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    playerOneObject.transform.position = new Vector3(-4, -3, transform.position.z);
+                    playerSixObject.transform.position = new Vector3(-4, -3, transform.position.z);
                 }
 
                 break;
@@ -779,7 +863,7 @@ public class GameManager : MonoBehaviour
     //after the server call to fire the game the player will know if they are player 1,
     // this will tell them (in on data received fire match) if they are the host
     // if they are the host they will send this call with random game data
-    //@Yelsa Step 4B
+    //@Yelsa Step 4C
     public void HostPrepGame()
     {
         //set the player as the host if they get to this point
@@ -824,16 +908,16 @@ public class GameManager : MonoBehaviour
 
     }
 
-    //after the call to fire match, all players will SetupAfterMatchFound
-    //when they are done with that they will call this method to tell the server they are ready to start the game
-    void ThisPlayerIsReadyToStart()
-    {
+    ////after the call to fire match, all players will SetupAfterMatchFound
+    ////when they are done with that they will call this method to tell the server they are ready to start the game
+    //void ThisPlayerIsReadyToStart()
+    //{
 
-        RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+    //    RealtimePayload realtimePayload = new RealtimePayload(_playerId);
 
-        _realTimeClient.SendMessage(OP_START_GAME, realtimePayload);
+    //    _realTimeClient.SendMessage(OP_START_GAME, realtimePayload);
 
-    }
+    //}
 
 
     //TODO: this should just be handled in onDataReceived by a call from server.
@@ -868,7 +952,7 @@ public class GameManager : MonoBehaviour
 
 
 
-    void StartTimer()
+    public void StartTimer()
     {
         timerRunning = true;
     }
@@ -902,24 +986,24 @@ public class GameManager : MonoBehaviour
 
     //this is unneeded because the server can just have each player
     //start a local countdown when they received the call from the server to load into the guess event
-    void HostStartCountdown()
-    {
-        ////TODO: call server and tell users to show timer / start the timer
-        //GameEventToServer startCountdownServerMessage = new GameEventToServer("901", _playerId);
+    //void HostStartCountdown()
+    //{
+    //    ////TODO: call server and tell users to show timer / start the timer
+    //    //GameEventToServer startCountdownServerMessage = new GameEventToServer("901", _playerId);
 
-        //string jsonData = JsonUtility.ToJson(startCountdownServerMessage);
+    //    //string jsonData = JsonUtility.ToJson(startCountdownServerMessage);
 
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    //    //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+    //    //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
 
-        //Debug.Log("countdown start: response code " + responseData.opCode);
+    //    //Debug.Log("countdown start: response code " + responseData.opCode);
 
 
-        //this should send a dataReceived to tell each player to LocalStartCountdown()
-        //LocalStartCountdown(); //TODO remove
+    //    //this should send a dataReceived to tell each player to LocalStartCountdown()
+    //    //LocalStartCountdown(); //TODO remove
 
-    }
+    //}
 
 
     //this starts the local countdown for the guess event
@@ -939,44 +1023,44 @@ public class GameManager : MonoBehaviour
 
 
     //this will be handled by the server, when all players have checked answer a server message will be sent out
-    async void HostResumeGameAfterGuessEvent()
-    {
-        ////TODO: tell the server that the players should resume the investigation
-        //GameEventToServer resumeGameAfterGuessServerMessage = new GameEventToServer("204", _playerId);
+    //async void HostResumeGameAfterGuessEvent()
+    //{
+    //    ////TODO: tell the server that the players should resume the investigation
+    //    //GameEventToServer resumeGameAfterGuessServerMessage = new GameEventToServer("204", _playerId);
 
-        //string jsonData = JsonUtility.ToJson(resumeGameAfterGuessServerMessage);
+    //    //string jsonData = JsonUtility.ToJson(resumeGameAfterGuessServerMessage);
 
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    //    //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+    //    //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
 
-        //Debug.Log("resumeGameAfterGuessServerMessage: response code " + responseData.opCode);
+    //    //Debug.Log("resumeGameAfterGuessServerMessage: response code " + responseData.opCode);
 
-        ////ready check should be triggered by the dataReceived response code
+    //    ////ready check should be triggered by the dataReceived response code
 
-        ////this will not run until after ready check
-        //_resumeGameAfterGuessEvent = true;
+    //    ////this will not run until after ready check
+    //    //_resumeGameAfterGuessEvent = true;
 
-    }
+    //}
 
-    //this will be handled by the server, when all players have checked answer a server message will be sent out
-    async void HostEndGame()
-    {
+    ////this will be handled by the server, when all players have checked answer a server message will be sent out
+    //async void HostEndGame()
+    //{
 
-        //GameEventToServer endGameServerMessage = new GameEventToServer("209", _playerId);
+    //    //GameEventToServer endGameServerMessage = new GameEventToServer("209", _playerId);
 
-        //string jsonData = JsonUtility.ToJson(endGameServerMessage);
+    //    //string jsonData = JsonUtility.ToJson(endGameServerMessage);
 
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    //    //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        //use this format to get the reponse from the server
-        //PlayerMovementData responseData = JsonConvert.DeserializeObject<PlayerMovementData>(response);
+    //    //use this format to get the reponse from the server
+    //    //PlayerMovementData responseData = JsonConvert.DeserializeObject<PlayerMovementData>(response);
 
-        //TODO: use the response to get the name of the winner.. then run the winner cutscene (in onDataReceived)
-        //on the server end tell the server connection to end in like 1 minute.
+    //    //TODO: use the response to get the name of the winner.. then run the winner cutscene (in onDataReceived)
+    //    //on the server end tell the server connection to end in like 1 minute.
 
 
-    }
+    //}
 
 
     public void EndGame()
@@ -1012,6 +1096,8 @@ public class GameManager : MonoBehaviour
 
     }
 
+
+    //TODO: use this or remove it... currently not in use
     void NoAnswerSubmittedCutscene()
     {
         submittedAnswer = true;
@@ -1219,7 +1305,7 @@ public class GameManager : MonoBehaviour
 
         var ipAddress = playerSessionObject.IpAddress;
         var playerSessionId = playerSessionObject.PlayerSessionId;
-        var port = Int32.Parse(playerSessionObject.Port);
+        var port = int.Parse(playerSessionObject.Port);
         _playerId = playerSessionObject.PlayerId;
 
 
@@ -1237,12 +1323,12 @@ public class GameManager : MonoBehaviour
             //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
             LoadingMatchUI(false);
 
-            _realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
-            _realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
+            //_realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
+            //_realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
 
-            //TODO: add startgame handler
+            ////TODO: add startgame handler
 
-            _realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
+            //_realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
 
             //_realTimeClient.GameOverEventHandler += OnGameOverEvent;
 
@@ -1261,7 +1347,7 @@ public class GameManager : MonoBehaviour
             //we should turn this on... but it will not run until ready to true.. therefore we can
             //add a ready make sure that all the players have joined? before we fire this off in Update.
             
-            _prepGame = true;
+            //_prepGame = true;
 
         }
         else
@@ -1285,111 +1371,111 @@ public class GameManager : MonoBehaviour
     }
 
     //this will be handled onDataRecieved after the player connects to the server
-     void CheckIfHost()
-    {
-        ////determine if player is host by asking server.. if they are isHost = true
+    // void CheckIfHost()
+    //{
+    //    ////determine if player is host by asking server.. if they are isHost = true
 
 
-        //GameEventToServer getHost = new GameEventToServer("199", _playerId);
+    //    //GameEventToServer getHost = new GameEventToServer("199", _playerId);
 
-        //string jsonData = JsonUtility.ToJson(getHost);
-
-
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    //    //string jsonData = JsonUtility.ToJson(getHost);
 
 
-        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+    //    //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        //if (responseData != null)
-        //{
-        //    string responsePlayerId = responseData.playerId;
 
-        //    if (responsePlayerId == _playerId)
-        //    {
-        //        Debug.Log("you are the host");
-        //        isHost = true;
-        //    }
-        //    else
-        //    {
-        //        //this should be an empty string if not the host
-        //        Debug.Log("you are not the host. reponseid = " + responsePlayerId + " . your id = " + _playerId);
-        //        isHost = false;
-        //    }
-        //}
-    }
+    //    //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+
+    //    //if (responseData != null)
+    //    //{
+    //    //    string responsePlayerId = responseData.playerId;
+
+    //    //    if (responsePlayerId == _playerId)
+    //    //    {
+    //    //        Debug.Log("you are the host");
+    //    //        isHost = true;
+    //    //    }
+    //    //    else
+    //    //    {
+    //    //        //this should be an empty string if not the host
+    //    //        Debug.Log("you are not the host. reponseid = " + responsePlayerId + " . your id = " + _playerId);
+    //    //        isHost = false;
+    //    //    }
+    //    //}
+    //}
 
     
 
-    void OnPlayerMovementEvent(object sender, PlayerMovementArgs playerMovementArgs)
-    {
-        UpdatePlayerMovement(playerMovementArgs);
+    //void OnPlayerMovementEvent(object sender, PlayerMovementArgs playerMovementArgs)
+    //{
+    //    UpdatePlayerMovement(playerMovementArgs);
 
 
-    }
+    //}
 
-    private void UpdatePlayerMovement(PlayerMovementArgs playerMovementArgs)
-    {
-        //TODO: for the player sprite for the playerid received update their location to the one received?
+    //private void UpdatePlayerMovement(PlayerMovementArgs playerMovementArgs)
+    //{
+    //    //TODO: for the player sprite for the playerid received update their location to the one received?
 
-        if(playerMovementArgs != null)
-        {
-            Debug.Log("Gamemanager. Update player movement: id = " + playerMovementArgs.playerId
-            + " x: " + playerMovementArgs.playerXLocation + " y: " + playerMovementArgs.playerYLocation
-            + " z: " + playerMovementArgs.playerZLocation);
+    //    if(playerMovementArgs != null)
+    //    {
+    //        Debug.Log("Gamemanager. Update player movement: id = " + playerMovementArgs.playerId
+    //        + " x: " + playerMovementArgs.playerXLocation + " y: " + playerMovementArgs.playerYLocation
+    //        + " z: " + playerMovementArgs.playerZLocation);
 
-        }
-        else
-        {
-            Debug.Log("Gamemanager. playermovementargs null");
-        }
+    //    }
+    //    else
+    //    {
+    //        Debug.Log("Gamemanager. playermovementargs null");
+    //    }
 
-    }
+    //}
 
-    void OnCheckAnswersEvent(object sender, CheckAnswersArgs checkAnswersArgs)
-    {
+    //void OnCheckAnswersEvent(object sender, CheckAnswersArgs checkAnswersArgs)
+    //{
 
-        UpdateCheckAnswers(checkAnswersArgs);
+    //    UpdateCheckAnswers(checkAnswersArgs);
 
-    }
+    //}
 
-    private void UpdateCheckAnswers(CheckAnswersArgs checkAnswersArgs)
-    {
-        //TODO: check the answers against the ones that were chosen on game start
-
-
-        if (checkAnswersArgs != null)
-        {
-            Debug.Log("Gamemanager. checkanswers weapon " + checkAnswersArgs.currentAnswerWeapon);
-
-        }
-        else
-        {
-            Debug.Log("Gamemanager. playermovementargs null");
-        }
+    //private void UpdateCheckAnswers(CheckAnswersArgs checkAnswersArgs)
+    //{
+    //    //TODO: check the answers against the ones that were chosen on game start
 
 
-    }
+    //    if (checkAnswersArgs != null)
+    //    {
+    //        Debug.Log("Gamemanager. checkanswers weapon " + checkAnswersArgs.currentAnswerWeapon);
+
+    //    }
+    //    else
+    //    {
+    //        Debug.Log("Gamemanager. playermovementargs null");
+    //    }
 
 
-    void OnRemotePlayerIdEvent(object sender, RemotePlayerIdEventArgs remotePlayerIdEventArgs)
-    {
-        Debug.Log($"Remote player id received: {remotePlayerIdEventArgs.remotePlayerId}.");
-        UpdateRemotePlayerId(remotePlayerIdEventArgs);
-    }
-
-    private void UpdateRemotePlayerId(RemotePlayerIdEventArgs remotePlayerIdEventArgs)
-    {
-        _remotePlayerId = remotePlayerIdEventArgs.remotePlayerId;
-        _updateRemotePlayerId = true;
-    }
+    //}
 
 
-    void OnGameOverEvent(object sender, GameOverEventArgs gameOverEventArgs)
-    {
-        //Debug.Log($"Game over event received with winner: {gameOverEventArgs.matchResults.winnerId}.");
-        //this._matchResults = gameOverEventArgs.matchResults;
-        //this._gameOver = true;
-    }
+    //void OnRemotePlayerIdEvent(object sender, RemotePlayerIdEventArgs remotePlayerIdEventArgs)
+    //{
+    //    Debug.Log($"Remote player id received: {remotePlayerIdEventArgs.remotePlayerId}.");
+    //    UpdateRemotePlayerId(remotePlayerIdEventArgs);
+    //}
+
+    //private void UpdateRemotePlayerId(RemotePlayerIdEventArgs remotePlayerIdEventArgs)
+    //{
+    //    _remotePlayerId = remotePlayerIdEventArgs.remotePlayerId;
+    //    _updateRemotePlayerId = true;
+    //}
+
+
+    //void OnGameOverEvent(object sender, GameOverEventArgs gameOverEventArgs)
+    //{
+    //    //Debug.Log($"Game over event received with winner: {gameOverEventArgs.matchResults.winnerId}.");
+    //    //this._matchResults = gameOverEventArgs.matchResults;
+    //    //this._gameOver = true;
+    //}
 
 
 
@@ -1546,17 +1632,17 @@ public class PlayerMovementData
     public float playerXPosition;
     public float playerYPosition;
     public float playerZPosition;
-    public string playerId;
+    public int playerNumber;
    
 
     public PlayerMovementData() { }
 
-    public PlayerMovementData(float playerXPosition, float playerYPosition, float playerZPosition, string playerId)
+    public PlayerMovementData(float playerXPosition, float playerYPosition, float playerZPosition, int playerNumber)
     {
         this.playerXPosition = playerXPosition;
         this.playerYPosition = playerYPosition;
         this.playerZPosition = playerZPosition;
-        this.playerId = playerId;
+        this.playerNumber = playerNumber;
 
     }
 
