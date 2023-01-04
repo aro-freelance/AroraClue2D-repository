@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Linq;
 using Aws.GameLift.Realtime;
+using UnityEditor.PackageManager;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -94,7 +96,8 @@ public class GameManager : MonoBehaviour
     private APIManager _apiManager;
 
 
-    private const int DEFAULT_UDP_PORT = 8921;
+    private const int DEFAULT_UDP_PORT = 33400;
+    // 8921;
 
     //after CS bools
     public bool isReadyToStartCountdown;
@@ -175,8 +178,8 @@ public class GameManager : MonoBehaviour
     private const string REQUEST_LOG_URL = "2";
 
 
-    
 
+    bool IsConnectedToServer = false;
 
 
     // Start is called before the first frame update
@@ -932,30 +935,30 @@ public class GameManager : MonoBehaviour
 
     //TODO: this should just be handled in onDataReceived by a call from server.
     //server will send a call when all players are ready to start, and then the host will start the timer and the players will localresume
-    void HostStartGame()
-    {
+    //void HostStartGame()
+    //{
 
-        //GameEventToServer startGameServerMessage = new GameEventToServer("201", _playerId);
+    //    //GameEventToServer startGameServerMessage = new GameEventToServer("201", _playerId);
 
-        //string jsonData = JsonUtility.ToJson(startGameServerMessage);
+    //    //string jsonData = JsonUtility.ToJson(startGameServerMessage);
 
-        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
+    //    //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonData);
 
-        //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
+    //    //GameEventToServer responseData = JsonConvert.DeserializeObject<GameEventToServer>(response);
         
 
-        //Debug.Log("hoststartgame: response code " + responseData.opCode);
+    //    //Debug.Log("hoststartgame: response code " + responseData.opCode);
 
-        //this will have a datareceived response telling the players to all LocalResume and the host to StartTimer
+    //    //this will have a datareceived response telling the players to all LocalResume and the host to StartTimer
 
-        ////TODO: remove
-        //if (isHost)
-        //{
-        //    StartTimer();
-        //}
-        //LocalResume(); //TODO: remove
+    //    ////TODO: remove
+    //    //if (isHost)
+    //    //{
+    //    //    StartTimer();
+    //    //}
+    //    //LocalResume(); //TODO: remove
 
-    }
+    //}
 
 
    
@@ -976,6 +979,7 @@ public class GameManager : MonoBehaviour
 
         //close the menu if it is open... TODO: test if this is annoying
         GameMenu.instance.CloseMenu();
+        LaunchMenu.instance.CloseMenu();
 
     }
 
@@ -1204,8 +1208,9 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("response: " + response);
 
-        //GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
-        /*
+        GameSessionPlacementInfo gameSessionPlacementInfo = JsonConvert.DeserializeObject<GameSessionPlacementInfo>(response);
+        PlayerSessionObject playerSessionObject = JsonConvert.DeserializeObject<PlayerSessionObject>(response);
+
         if (gameSessionPlacementInfo != null)
         {
 
@@ -1230,11 +1235,13 @@ public class GameManager : MonoBehaviour
 
                 Int32.TryParse(gameSessionPlacementInfo.Port, out int portAsInt);
 
-                
+
 
                 // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
                 // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
                 EstablishConnectionToRealtimeServer(gameSessionPlacementInfo.IpAddress, portAsInt, gameSessionPlacementInfo.PlayerSessionId);
+
+                //StartCoroutine(EstablishConnectionToRealtimeServer(playerSessionObject));
             }
             else
             {
@@ -1244,26 +1251,26 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.Log("Error: GAME SESSION PLACEMENT INFO is NULL");
-        } */
+        } 
 
-        PlayerSessionObject playerSessionObject = JsonConvert.DeserializeObject<PlayerSessionObject>(response);
+        //PlayerSessionObject playerSessionObject = JsonConvert.DeserializeObject<PlayerSessionObject>(response);
 
-        if (playerSessionObject != null)
-        {
+        //if (playerSessionObject != null)
+        //{
 
-            //int port = Int32.Parse(playerSessionObject.Port);
+        //    //int port = Int32.Parse(playerSessionObject.Port);
 
-            //playerSessionObject.IpAddress, port, playerSessionObject.PlayerSessionId
+        //    //playerSessionObject.IpAddress, port, playerSessionObject.PlayerSessionId
 
-            EstablishConnectionToRealtimeServer(playerSessionObject);
+        //    StartCoroutine(EstablishConnectionToRealtimeServer(playerSessionObject));
 
 
-            //TODO: if this doesn't work go grab this (and subscribe) from the batteryacid project... i changed it too much to keep it
-        }
-        else
-        {
-            Debug.Log("Error: player session objet is NULL");
-        }
+        //    //TODO: if this doesn't work go grab this (and subscribe) from the batteryacid project... i changed it too much to keep it
+        //}
+        //else
+        //{
+        //    Debug.Log("Error: player session objet is NULL");
+        //}
 
 
 
@@ -1274,70 +1281,57 @@ public class GameManager : MonoBehaviour
     //TODO: @HERE this function is still giving a URI issue. It is trying to start a game session and then failing to with a uri error
     // afterwards if i try to connect the session has been created but this player didn't ever get notified and connect to it...
     // could still be onDataReceived or could be that the url is wrong. trouble shoot and fix.
-    //private async Task<bool> SubscribeToFulfillmentNotifications(PlayerSessionObject playerSessionObject)
-    //{
-    //    Debug.Log("GM: subscribe to fullfillment");
+    private async Task<bool> SubscribeToFulfillmentNotifications(string placementId)
+    {
+        Debug.Log("GM: subscribe to fullfillment");
 
 
-    //    /*
-    //    PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(playerSessionObject);
+        
+        PlayerPlacementFulfillmentInfo playerPlacementFulfillmentInfo = 
+            await _sqsMessageProcessing.SubscribeToFulfillmentNotifications(placementId);
 
-    //    //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
-    //    LoadingMatchUI(false);
+        //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
+        LoadingMatchUI(false);
 
-    //    if (playerPlacementFulfillmentInfo != null)
-    //    {
-    //        Debug.Log("Player placement was fulfilled...");
-    //        // Debug.Log("Placed Player Sessions count: " + playerPlacementFulfillmentInfo.placedPlayerSessions.Count);
+        if (playerPlacementFulfillmentInfo != null)
+        {
+            Debug.Log("Player placement was fulfilled...");
+            // Debug.Log("Placed Player Sessions count: " + playerPlacementFulfillmentInfo.placedPlayerSessions.Count);
 
-    //        // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
-    //        // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
-    //        EstablishConnectionToRealtimeServer(playerPlacementFulfillmentInfo.ipAddress, playerPlacementFulfillmentInfo.port,
-    //            playerPlacementFulfillmentInfo.placedPlayerSessions[0].playerSessionId);
+            // Once connected, the Realtime service moves the Player session from Reserved to Active, which means we're ready to connect.
+            // https://docs.aws.amazon.com/gamelift/latest/apireference/API_CreatePlayerSession.html
+            EstablishConnectionToRealtimeServer(playerPlacementFulfillmentInfo.ipAddress, playerPlacementFulfillmentInfo.port,
+                playerPlacementFulfillmentInfo.placedPlayerSessions[0].playerSessionId);
 
-    //        return true;
-    //    }
-    //    else
-    //    {
-    //        Debug.Log("Player placement was null, something went wrong...");
-    //        return false;
-    //    }*/
-    //}
+            return true;
+        }
+        else
+        {
+            Debug.Log("Player placement was null, something went wrong...");
+            return false;
+        }
+    }
 
 
     //use the response from the server (PlayerSessionObject) to create a Client to connect to a player session
     //@Yelsa Step 3
-    private async void EstablishConnectionToRealtimeServer(PlayerSessionObject playerSessionObject)
+
+
+    private void EstablishConnectionToRealtimeServer(string ipAddress, int port, string playerSessionId)
     {
-        Debug.Log("establish connection to server method called");
+        //show UI to let player know something is loading
+        LoadingMatchUI(true);
 
+        //int localUdpPort = GetAvailableUdpPort();
         int localUdpPort = FindAvailableUDPPort(DEFAULT_UDP_PORT, DEFAULT_UDP_PORT + 20);
-        //GetAvailableUdpPort();
-
-        if (localUdpPort == -1)
-        {
-            Debug.Log("Unable to find an open UDP listen port");
-            //yield break;
-        }
-        else
-        {
-            Debug.Log($"UDP listening on port: {localUdpPort}");
-        }
-
-        var ipAddress = playerSessionObject.IpAddress;
-        var playerSessionId = playerSessionObject.PlayerSessionId;
-        var port = int.Parse(playerSessionObject.Port);
-        _playerId = playerSessionObject.PlayerId;
-
 
         RealtimePayload realtimePayload = new RealtimePayload(_playerId);
         string payload = JsonUtility.ToJson(realtimePayload);
 
-        //show UI to let player know something is loading
-        LoadingMatchUI(true);
-
-        //this is where the connection between client and playersession is established
         _realTimeClient = new RealTimeClient(ipAddress, port, localUdpPort, playerSessionId, payload, ConnectionType.RT_OVER_WS_UDP_UNSECURED);
+        //_realTimeClient.CardPlayedEventHandler += OnCardPlayedEvent;
+        //_realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
+        //_realTimeClient.GameOverEventHandler += OnGameOverEvent;
 
         if (_realTimeClient != null)
         {
@@ -1346,42 +1340,118 @@ public class GameManager : MonoBehaviour
 
             //@Yelsa... this is returning false... so we need to Connect the client.
             //This is currently in the initialization, but that is clearly not working. move it here?
-            Debug.Log("realtimeclient exists. is connected? " + _realTimeClient.IsConnected());
-
-
-            //_realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
-            //_realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
-
-            ////TODO: add startgame handler
-
-            //_realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
-
-            //_realTimeClient.GameOverEventHandler += OnGameOverEvent;
-
-
-            // get the server logs
-            //call server to get log url
-            //FindMatch logUrlMessage = new FindMatch(REQUEST_LOG_URL, _playerId);
-            //string jsonPostData = JsonUtility.ToJson(logUrlMessage);
-
-            //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
-
-            //Debug.Log("log url response : " + response);
-
-
-            //TODO: @YELSA implement this method with server calls that work
-            /// note that at this point the player is connecting but reserved... they are then timing out after 1 minute. fix this issue
-            /// 
-
-
-
-
-
+            Debug.Log("realtimeclient initialized. is connected? " + _realTimeClient.IsConnected());
+            Debug.Log("ip = " + ipAddress + ". port = " + port + ". localudpport = " + localUdpPort + ". playersessionid = " + playerSessionId
+                + ". payload = " + payload + ".");
         }
         else
-        
-            Debug.Log("realtimeclient: null");
+        {
+            Debug.Log("realtimeclient is null");
+        }
+
+
     }
+
+
+    //private IEnumerator EstablishConnectionToRealtimeServer(PlayerSessionObject playerSessionObject)
+    //{
+    //    Debug.Log("establish connection to server method called");
+
+    //    int localUdpPort = FindAvailableUDPPort(DEFAULT_UDP_PORT, DEFAULT_UDP_PORT + 20);
+    //    //GetAvailableUdpPort();
+
+    //    if (localUdpPort == -1)
+    //    {
+    //        Debug.Log("Unable to find an open UDP listen port");
+    //        //yield break;
+    //    }
+    //    else
+    //    {
+    //        Debug.Log($"UDP listening on port: {localUdpPort}");
+    //    }
+
+    //    var ipAddress = playerSessionObject.IpAddress;
+    //    var playerSessionId = playerSessionObject.PlayerSessionId;
+    //    var port = int.Parse(playerSessionObject.Port);
+    //    _playerId = playerSessionObject.PlayerId;
+
+    //    Debug.Log("player session object. ipaddress = " + ipAddress + ". session id = " + playerSessionId + ". port = " + port);
+
+
+    //    RealtimePayload realtimePayload = new RealtimePayload(_playerId);
+    //    string payload = JsonUtility.ToJson(realtimePayload);
+
+    //    //show UI to let player know something is loading
+    //    LoadingMatchUI(true);
+
+    //    //this is where the connection between client and playersession is established
+    //    _realTimeClient = new RealTimeClient(ipAddress, port, localUdpPort, playerSessionId, payload, ConnectionType.RT_OVER_WS_UDP_UNSECURED);
+
+    //    if (_realTimeClient != null)
+    //    {
+    //        //hide the UI and take the player to a waiting screen until ready for the match start (waiting for other players)
+    //        LoadingMatchUI(false);
+
+    //        //@Yelsa... this is returning false... so we need to Connect the client.
+    //        //This is currently in the initialization, but that is clearly not working. move it here?
+    //        Debug.Log("realtimeclient initialized. is connected? " + _realTimeClient.IsConnected());
+
+    //        ConnectionToken token = new ConnectionToken(playerSessionId, null);
+
+
+    //        _realTimeClient.Client = _realTimeClient.Connect(_realTimeClient.Client, ipAddress, port, localUdpPort, token);
+
+    //        int x = 0;
+    //        while (x < 5000)
+    //        {
+
+    //            Debug.Log("is it connected loop");
+    //            if (_realTimeClient.IsConnected())
+    //            {
+    //                IsConnectedToServer = true;
+    //                Debug.Log("[client] Connected to server");
+    //                break;
+    //            }
+
+    //            x++;
+
+    //            yield return null;
+    //        }
+
+
+    //        //_realTimeClient.PlayerMovementEventHandler += OnPlayerMovementEvent;
+    //        //_realTimeClient.CheckAnswersEventHandler += OnCheckAnswersEvent;
+
+    //        ////TODO: add startgame handler
+
+    //        //_realTimeClient.RemotePlayerIdEventHandler += OnRemotePlayerIdEvent;
+
+    //        //_realTimeClient.GameOverEventHandler += OnGameOverEvent;
+
+
+    //        // get the server logs
+    //        //call server to get log url
+    //        //FindMatch logUrlMessage = new FindMatch(REQUEST_LOG_URL, _playerId);
+    //        //string jsonPostData = JsonUtility.ToJson(logUrlMessage);
+
+    //        //string response = await _apiManager.Post(GameSessionPlacementEndpoint, jsonPostData);
+
+    //        //Debug.Log("log url response : " + response);
+
+
+    //        //TODO: @YELSA implement this method with server calls that work
+    //        /// note that at this point the player is connecting but reserved... they are then timing out after 1 minute. fix this issue
+    //        /// 
+
+
+
+
+
+    //    }
+    //    else
+
+    //        Debug.Log("realtimeclient: null");
+    //}
 
     public void LoadingMatchUI(bool isLoadingMatch)
     {
@@ -1392,7 +1462,9 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            LaunchMenu.instance.statusUpdateText.text = "Waiting for other players.";
+            //@Yelsa.. turned off for testing tun this back on and let the launch menu hide when the game starts
+            //LaunchMenu.instance.statusUpdateText.text = "Waiting for other players.";
+            LaunchMenu.instance.CloseMenu();
 
         }
 
@@ -1773,6 +1845,26 @@ public class PlayerSessionObject
     public string IpAddress;
     public string Port;
 }
+
+/*
+ {
+   "PlayerSession": { 
+      "CreationTime": number,
+      "DnsName": "string",
+      "FleetArn": "string",
+      "FleetId": "string",
+      "GameSessionId": "string",
+      "IpAddress": "string",
+      "PlayerData": "string",
+      "PlayerId": "string",
+      "PlayerSessionId": "string",
+      "Port": number,
+      "Status": "string",
+      "TerminationTime": number
+   }
+}
+ 
+ */
 
 [Serializable]
 public class PlayerData

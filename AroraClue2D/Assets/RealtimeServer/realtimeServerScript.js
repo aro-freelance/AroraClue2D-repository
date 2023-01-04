@@ -1,16 +1,19 @@
 ﻿// Based on source: https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script.html
 
-//ARORA 0.0.9052
+//ARORA 0.0.905702
 
 //this handles player interactions on the server.  
 
 // Example Realtime Server Script
 'use strict';
 
+/*jshint esversion: 8 */
+
 
 // Example override configuration
 const configuration = {
-    pingIntervalTime: 30000
+    pingIntervalTime: 30000,
+    maxPlayers: 6
 };
 
 
@@ -34,38 +37,27 @@ var onProcessStartedCalled = false; // Record if onProcessStarted has been calle
 const OP_CODE_PLAYER_ACCEPTED = 113;
 const OP_CODE_DISCONNECT_NOTIFICATION = 114;
 
-const OP_REQUEST_FIND_MATCH_S = 1;
 const OP_FIRE_MATCH_S = 2;
-const OP_PREP_GAME_S = 3;
 const OP_RESUME_GAME_S = 4;
 const OP_GAMEOVER_S = 5;
 const OP_START_GAME_S = 6;
 const OP_START_GUESS_EVENT_S = 7;
-const OP_START_COUNTDOWN_S = 8;
 const OP_END_GUESS_EVENT_S = 9;
-const OP_SET_PLAYER_INFO_S = 10;
-const OP_CHECK_ANSWERS_S = 11;
 const OP_PLAYER_MOVEMENT_S = 12;
 const OP_HOLD_AFTER_GUESS_CHECKED_S = 13;
 
 
 //messages player sends
 
-const OP_REQUEST_FIND_MATCH = 501;
-const OP_FIRE_MATCH = 502;
 const OP_PREP_GAME = 503;
 const OP_RESUME_GAME = 504;
-const OP_GAMEOVER = 505;
 const OP_START_GAME = 506;
 const OP_START_GUESS_EVENT = 507;
-const OP_START_COUNTDOWN = 508;
-const OP_END_GUESS_EVENT = 509;
-const OP_SET_PLAYER_INFO = 510;
 const OP_CHECK_ANSWERS = 511;
 const OP_PLAYER_MOVEMENT = 512;
 
 
-let players = [];
+let playersInfo = [];
 let playerDataList = [];
 
 //the game will start after there are this many active players connected
@@ -141,48 +133,45 @@ function onHealthCheck() {
 // Return true if player should connect, false to reject
 // This is hit before onPlayerAccepted
 //@Yelsa Step 4A
-function onPlayerConnect(connectMsg) {
-    logger.info("onPlayerConnect: ");
-    logger.info(connectMsg);
+//function onPlayerConnect(connectMsg) {
+function onPlayerConnect() {
 
-    let payloadRaw = new Buffer.from(connectMsg.payload);
-    let payload = JSON.parse(payloadRaw);
-    logger.info("onPlayerConnect payload: ");
-    logger.info(payload);
+    //logger.info("onPlayerConnect: ");
+    //logger.info(connectMsg);
 
-    let playerConnected = {
-        peerId: connectMsg.player.peerId,
-        playerId: payload.playerId,
-        playerSessionId: connectMsg.player.playerSessionId,
-        accepted: true,
-        active: true
-    };
-    logger.info(playerConnected);
+    //let payloadRaw = new Buffer.from(connectMsg.payload);
+    //let payload = JSON.parse(payloadRaw);
+    //logger.info("onPlayerConnect payload: ");
+    //logger.info(payload);
 
-    //do this in onPlayerAccepted where we already have a player object ?
-    players.push(playerConnected);
+    //let playerConnected = {
+    //    peerId: connectMsg.player.peerId,
+    //    playerId: payload.playerId,
+    //    playerSessionId: connectMsg.player.playerSessionId,
+    //    accepted: false,
+    //    active: false
+    //};
+    //logger.info(playerConnected);
 
-    let numberOfPlayers = players.length.toString;
+    ////do this in onPlayerAccepted where we already have a player object ?
+    //playersInfo.push(playerConnected);
 
-    //TODO: figure out why this is op code, id, data but ...
-    /*
-     * public class DataReceivedEventArgs : BaseEventArgs
-    {
-        public DataReceivedEventArgs(int sender, int opCode, byte[] data)
-            : base(sender, opCode, data)
-        {
-        }
-    }
-     */
+    //let numberOfPlayers = players.length.toString;
 
-    //replaced second term. it was : connectMsg.player.peerId
-    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, session.getServerId(), numberOfPlayers);
-    session.sendReliableMessage(msg, connectMsg.player.peerId);
+
+    ////replaced second term. it was : connectMsg.player.peerId
+    //const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, session.getServerId(), numberOfPlayers);
+    //session.sendReliableMessage(msg, connectMsg.player.peerId);
 
 
     // Perform any validation needed for connectMsg.payload, connectMsg.peerId
     return true;
 }
+
+
+
+
+
 
 // Called when a Player is accepted into the game
 //@Yelsa Step 5b
@@ -193,7 +182,7 @@ function onPlayerAccepted(player) {
     //this is done in onplayeraccepted ?
     //players.push(player)
 
-    players.forEach((playerInfo) => {
+    playersInfo.forEach((playerInfo) => {
         logger.info("onPlayerAccepted players checking peerId");
 
         if (playerInfo.peerId == player.peerId) {
@@ -207,7 +196,7 @@ function onPlayerAccepted(player) {
 
     // TODO: figure out ifi it is a problem that this is called twice... This OP code is used in onPlayerConnected
     //replaced second term. it was : connectMsg.player.peerId
-    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, session.getServerId(), "Peer " + player.peerId + " accepted");
+    const msg = session.newTextGameMessage(OP_CODE_PLAYER_ACCEPTED, player.peerId, "Peer " + player.peerId + " accepted");
     session.sendReliableMessage(msg, player.peerId);
     
     activePlayers++;
@@ -233,12 +222,11 @@ function onPlayerAccepted(player) {
 
     //@Yelsa if we are having problems we may need to make the host prep message async?
     //if there are enough active players and the server has received a message with random data from host to prep the game
-    if (activePlayers == numberOfPlayersDesiredToFireMatch) {
+    if (activePlayers >= numberOfPlayersDesiredToFireMatch) {
         if (weapon != null && suspect != null && place != null) {
 
             serverConnected = true;
 
-            logger.info("onPlayerAccepted activePlayers > 1");
 
             // getPlayers returns "a list of peer IDs for players that are currently connected to the game session"
             // So, let's match these players to the ones stored in players
@@ -248,28 +236,36 @@ function onPlayerAccepted(player) {
                 logger.info(playerSession);
                 logger.info(playerId);
 
-                players.forEach((playerInfo) => {
+                playersInfo.forEach((playerInfo) => {
                     logger.info("onPlayerAccepted players playerInfo loop");
                     logger.info("playerInfo.peerId: " + playerInfo.peerId + ", playerSession.peerId: " + playerSession.peerId + ", playerInfo.active: " + playerInfo.active);
 
-                    //make a GamePrepData object to send the player
-                    var gameStartPayload = {
-                        playerDataList: playerDataList,
-                        selectedWeapon: selectedWeapon,
-                        selectedSuspect: selectedSuspect,
-                        selectedPlace: selectedPlace
-                    };
+                    //for each player, send other players their id?
+                    if (playerInfo.peerId != playerSession.peerId) {
+                        //make a GamePrepData object to send the player
+                        var gameStartPayload = {
+                            playerDataList: playerDataList,
+                            selectedWeapon: weapon,
+                            selectedSuspect: suspect,
+                            selectedPlace: place
+                        };
 
-                    logger.info("Sending prep match message...");
-                    logger.info(gameStartPayload);
+                        logger.info("Sending prep match message...");
+                        logger.info(gameStartPayload);
 
 
-                    //@Yelsa Step 5b message sent here
-                    //start the prep phase if we have enough players
-                    const startMatchMessage = session.newTextGameMessage(OP_FIRE_MATCH_S, session.getServerId(), JSON.stringify(gameStartPayload));
-                    session.getPlayers().forEach((playerId) => {
-                        session.sendReliableMessage(startMatchMessage, playerId);
-                    });
+                        //@Yelsa Step 5b message sent here
+                        //start the prep phase if we have enough players
+                        const startMatchMessage = session.newTextGameMessage(OP_FIRE_MATCH_S, session.getServerId(), JSON.stringify(gameStartPayload));
+                        session.sendReliableMessage(startMatchMessage, playerSession.peerId);
+
+
+                        //session.getPlayers().forEach((playerId) => {
+                           // session.sendReliableMessage(startMatchMessage, playerId);
+                        //});
+                    }
+
+                    
 
                 });
             });
@@ -293,7 +289,7 @@ function onPlayerDisconnect(peerId) {
     });
     activePlayers--;
 
-    players.forEach((playerInfo) => {
+    playersInfo.forEach((playerInfo) => {
         if (playerInfo.peerId == peerId) {
             playerInfo.active = false;
         }
@@ -309,7 +305,7 @@ function onMessage(gameMessage) {
     // pass data through the payload field
     var payloadRaw = new Buffer.from(gameMessage.payload);
     var payload = JSON.parse(payloadRaw);
-    logger.info("payload")
+    logger.info("payload");
     logger.info(payload);
     logger.info(payload.playerId);
 
@@ -325,7 +321,7 @@ function onMessage(gameMessage) {
 
             suspect = payload.selectedSuspect;
 
-            location = payload.selectedPlace;
+            place = payload.selectedPlace;
 
 
             break;
@@ -426,9 +422,9 @@ function onMessage(gameMessage) {
 
                 let endGameData = {
                     winnerName: winnerName,
-                    weapon: selectedWeapon,
-                    suspect: selectedSuspect,
-                    place: selectedPlace
+                    weapon: weapon,
+                    suspect: suspect,
+                    place: place
                 };
 
                 const gameOverMessage = session.newTextGameMessage(OP_GAMEOVER_S, session.getServerId(), JSON.stringify(endGameData));
@@ -540,7 +536,7 @@ function onMessage(gameMessage) {
                     playerNumber: playerNumber
                 };
 
-                logger.info("movement data")
+                logger.info("movement data");
                 logger.info(movementData);
 
 
@@ -571,6 +567,7 @@ function onMessage(gameMessage) {
 
     }
 }
+
 
 //function checkGameOver() {
 
@@ -674,54 +671,54 @@ function onStartGameSession(gameSession) {
     // Complete any game session set-up
 
     // Set up an example tick loop to perform server initiated actions
-    startTime = getTimeInS();
-    tickLoop();
+    //startTime = getTimeInS();
+    //tickLoop();
 }
 
+//async function gameoverCleanup() {
+//    // Call processEnding() to terminate the process and quit
+//    const outcome = await session.processEnding();
+//    logger.info("Completed process ending with: " + outcome);
+//    process.exit(0);
+//}
 
 
 // A simple tick loop example
 
 //TODO: could use something like this to run timer on server?
-async function tickLoop() {
-    // const elapsedTime = getTimeInS() - startTime;
-    // logger.info("Tick... " + elapsedTime + " activePlayers: " + activePlayers);
+//async function tickLoop() {
+//    // const elapsedTime = getTimeInS() - startTime;
+//    // logger.info("Tick... " + elapsedTime + " activePlayers: " + activePlayers);
 
-    if (!gameover) {
+//    if (!gameover) {
 
-        // If we had 2 players that are no longer active, end game.
-        // You can add a minimum elapsed time check here if you'd like
-        if (players.length == 2 && activePlayers == 0) { // && (elapsedTime > minimumElapsedTime)) {
-            logger.info("All players disconnected. Ending game");
+//        // If we had 2 players that are no longer active, end game.
+//        // You can add a minimum elapsed time check here if you'd like
+//        if (players.length == 2 && activePlayers == 0) { // && (elapsedTime > minimumElapsedTime)) {
+//            logger.info("All players disconnected. Ending game");
 
-            gameoverCleanup();
-        }
-        else if(serverConnected && activePlayers == 0) {
-            logger.info("All players disconnected. Ending game");
+//            gameoverCleanup();
+//        }
+//        else if(serverConnected && activePlayers == 0) {
+//            logger.info("All players disconnected. Ending game");
 
-            gameoverCleanup();
-        }
-        else {
-            setTimeout(tickLoop, tickTime);
-        }
+//            gameoverCleanup();
+//        }
+//        else {
+//            setTimeout(tickLoop, tickTime);
+//        }
 
         
 
-    } else {
-        logger.info("game over");
-        gameoverCleanup();
-    }
-}
+//    } else {
+//        logger.info("game over");
+//        gameoverCleanup();
+//    }
+//}
 
-async function gameoverCleanup() {
-    // Call processEnding() to terminate the process and quit
-    const outcome = await session.processEnding();
-    logger.info("Completed process ending with: " + outcome);
-    process.exit(0);
-}
 
 function randomIntFromInterval(min, max) { // min and max included 
-    return Math.floor(Math.random() * (max - min + 1) + min)
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 // Return true if the send should be allowed
@@ -759,7 +756,6 @@ function getTimeInS() {
 
 
 
-
 exports.ssExports = {
     configuration: configuration,
     init: init,
@@ -772,7 +768,17 @@ exports.ssExports = {
     onSendToGroup: onSendToGroup,
     onPlayerJoinGroup: onPlayerJoinGroup,
     onPlayerLeaveGroup: onPlayerLeaveGroup,
+    onStartGameSession: onStartGameSession,
     onProcessTerminate: onProcessTerminate,
-    onHealthCheck: onHealthCheck,
-    onStartGameSession: onStartGameSession
+    onHealthCheck: onHealthCheck
 };
+//exports.ssExports = {
+//    configuration: configuration,
+//    init: init,
+//    onMessage: onMessage,
+//    onPlayerConnect: onPlayerConnect,
+//    onPlayerDisconnect: onPlayerDisconnect,
+//    onProcessStarted: onProcessStarted,
+//    onPlayerAccepted: onPlayerAccepted,
+//    onStartGameSession: onStartGameSession
+//};

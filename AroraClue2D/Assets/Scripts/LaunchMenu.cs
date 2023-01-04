@@ -108,6 +108,12 @@ public class LaunchMenu : MonoBehaviour
 
     }
 
+    public void CloseMenu()
+    {
+        //this.GetComponent<GameObject>().SetActive(false);
+        //@Yelsa
+    }
+
 
 
 }

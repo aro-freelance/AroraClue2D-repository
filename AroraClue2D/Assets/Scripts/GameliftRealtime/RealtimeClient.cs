@@ -24,8 +24,7 @@ using Newtonsoft.Json;
  */
 public class RealTimeClient
 {
-    public Client Client { get; private set; }
-
+    public Client Client { get; private set; } 
     public bool OnCloseReceived { get; private set; }
     public bool GameStarted = false;
 
@@ -63,49 +62,63 @@ public class RealTimeClient
         // Create a client configuration to specify a secure or unsecure connection type
         // Best practice is to set up a secure connection using the connection type RT_OVER_WSS_DTLS_TLS12.
 
-        ClientConfiguration clientConfiguration = ClientConfiguration.Default();
+        //ClientConfiguration clientConfiguration = ClientConfiguration.Default();
 
-        //ClientConfiguration clientConfiguration = new ClientConfiguration()
-        //{
-        //    // C# notation to set the field ConnectionType in the new instance of ClientConfiguration
-        //    ConnectionType = connectionType
-        //};
+        ClientConfiguration clientConfiguration = new ClientConfiguration()
+        {
+            // C# notation to set the field ConnectionType in the new instance of ClientConfiguration
+            ConnectionType = connectionType
+        };
 
 
         Client = new Client(clientConfiguration);
 
-
-        //Client.ConnectionOpen += new EventHandler(OnOpenEvent);
-        //Client.ConnectionClose += new EventHandler(OnCloseEvent);
-        ////Client.GroupMembershipUpdated += new EventHandler<GroupMembershipEventArgs>(OnGroupMembershipUpdate);
-        //Client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
-        //Client.ConnectionError += new EventHandler<Aws.GameLift.Realtime.Event.ErrorEventArgs>(OnConnectionErrorEvent);
+        Client.ConnectionOpen += new EventHandler(OnOpenEvent);
+        Client.ConnectionClose += new EventHandler(OnCloseEvent);
+        Client.GroupMembershipUpdated += new EventHandler<GroupMembershipEventArgs>(OnGroupMembershipUpdate);
+        Client.DataReceived += new EventHandler<DataReceivedEventArgs>(OnDataReceived);
+        //Client.ConnectionError += new EventHandler<ErrorEventArgs>(OnConnectionErrorEvent);
 
         //@Yelsa  the token had null as payload parameter which is likely what was preventing player from being accepted as ACTIVE. Check back here whether RESERVED player status is still an issue.
-        //ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(connectionPayload));
+
+        RealtimePayload payload = JsonConvert.DeserializeObject<RealtimePayload>(connectionPayload);
+
+        string playerId = payload.playerId;
+
+
+        //ConnectionToken token = new ConnectionToken(playerSessionId, StringToBytes(playerId));
         ConnectionToken token = new ConnectionToken(playerSessionId, null);
         Client.Connect(endpoint, tcpPort, localUdpPort, token);
+        
 
-
+        Debug.Log("inside client initializer. is connected? " + IsConnected());
 
 
     }
+
+    //public Client Connect(Client client, string endpoint, int tcpPort, int localUdpPort, ConnectionToken token)
+    //{
+
+    //    client.Connect(endpoint, tcpPort, localUdpPort, token);
+
+    //    return client;
+    //}
 
    
 
 
-    private void OnConnectionErrorEvent(object sender, ErrorEventArgs e)
-    {
-        if (Client.ConnectedAndReady)
-        {
-            if (e.Exception != null)
-            {
-                Debug.Log($"[client] Connection Error! : " + e.Exception);
-                //GameManager.QuitToMainMenu();
-            }
-        }
+    //private void OnConnectionErrorEvent(object sender, ErrorEventArgs e)
+    //{
+    //    if (Client.ConnectedAndReady)
+    //    {
+    //        if (e.Exception != null)
+    //        {
+    //            Debug.Log($"[client] Connection Error! : " + e.Exception);
+    //            //GameManager.QuitToMainMenu();
+    //        }
+    //    }
         
-    }
+    //}
 
 
     /// <summary>
